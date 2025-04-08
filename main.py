@@ -1,5 +1,4 @@
 from pydub import AudioSegment
-import os
 from multiprocessing import Process
 from pydub.playback import play
 import random
@@ -8,11 +7,10 @@ from pydub.utils import make_chunks
 from tqdm import tqdm
 from numpy import argmin, argmax
 import copy
-from rain_mixing.src.utils.utils import verify_dir
 
-SONG_DIR = "tracks"
-EXPORT_DIR = "output"
-IMAGE_DIR = "cover"
+from rain_mixing.src.data.logging import log_dbfs
+from rain_mixing.src.utils.utils import *
+
 SILENCE_DUR = 2500
 FADE_OUT = 5000
 FADE_IN = 3000
@@ -82,6 +80,7 @@ def order_audio():
 
 
 if __name__ == '__main__':
+
     print("Fetching tracks...")
     get_tracks()
     order_audio()
@@ -122,7 +121,7 @@ if __name__ == '__main__':
         target_diff = TARGET_DBFS - curr_track.dBFS
         curr_track = curr_track + target_diff
         combined_tracks = curr_rain.overlay(curr_track)
-        print("Currently Editing " + str(i) + "/" + str(len(ordered_tracks) - 1) + ": " + curr_name)
+        print("Currently Editing " + str(i + 1) + "/" + str(len(ordered_tracks)) + ": " + curr_name)
 
         curr_start = 0
 
@@ -165,6 +164,8 @@ if __name__ == '__main__':
 
                     if i < len(tracks) - 1:
                         track_line = track_line.append(silent)
+
+                log_dbfs(ordered_tracks[i], curr_track)
 
             combined_tracks = curr_rain.overlay(curr_track)
             print("Processing...")
