@@ -8,6 +8,7 @@ from pydub.utils import make_chunks
 from tqdm import tqdm
 from numpy import argmin, argmax
 import copy
+from rain_mixing.src.utils.utils import verify_dir
 
 SONG_DIR = "tracks"
 EXPORT_DIR = "output"
@@ -23,16 +24,10 @@ track_names = []
 ordered_tracks = []
 ordered_track_names = []
 
+input_averages = []
+output_averages = []
 
-def verify_dir(dir: str):
-    if not os.path.isdir(dir):
-        try:
-            os.makedirs(dir)
-            return True
-        except OSError:
-            return False
-    return True
-
+# Loads all tracks in SONG_DIR to memory and adds the audio data to <tracks>, file names to <track_name>
 def get_tracks():
     song_verification = verify_dir(SONG_DIR)
 
@@ -40,17 +35,19 @@ def get_tracks():
         raise Exception("Track Directory verification failed")
 
     for filename in tqdm(os.listdir(SONG_DIR)):
-        f = os.path.join(SONG_DIR, filename)
+        if filename != "ignore":
+            f = os.path.join(SONG_DIR, filename)
 
-        loc = os.path.abspath(f)
-        extension = f[-3:]
-        track_name = filename[:-4]
+            loc = os.path.abspath(f)
+            extension = f[-3:]
+            track_name = filename[:-4]
 
-        audio = AudioSegment.from_file(file=loc, format=extension)
+            audio = AudioSegment.from_file(file=loc, format=extension)
 
-        tracks.append(audio)
-        track_names.append(track_name)
+            tracks.append(audio)
+            track_names.append(track_name)
 
+# Allows the user to order tracks in the output track manually or by random sort
 def order_audio():
     temp_tracks_copy = tracks[:]
     temp_names_copy = track_names[:]
@@ -61,7 +58,7 @@ def order_audio():
             for i in range(len(temp_names_copy)):
                 print("[" + str(i) + "] " + temp_names_copy[i])
             print("Enter index of track choice " + str(
-                len(ordered_tracks) + 1) + " or -1 to randomize current, -2 to randomize all")
+                len(ordered_tracks) + 1) + " or -1 to randomize current, -2 to randomize remaining")
             choice = input()
 
             try:
@@ -130,7 +127,6 @@ if __name__ == '__main__':
         curr_start = 0
 
         while not curr_finished:
-
             play_thread = Process(target=play, args=(combined_tracks[curr_start:],))
 
             play_thread.start()
