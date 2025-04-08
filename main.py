@@ -24,7 +24,21 @@ ordered_tracks = []
 ordered_track_names = []
 
 
+def verify_dir(dir: str):
+    if not os.path.isdir(dir):
+        try:
+            os.makedirs(dir)
+            return True
+        except OSError:
+            return False
+    return True
+
 def get_tracks():
+    song_verification = verify_dir(SONG_DIR)
+
+    if not song_verification:
+        raise Exception("Track Directory verification failed")
+
     for filename in tqdm(os.listdir(SONG_DIR)):
         f = os.path.join(SONG_DIR, filename)
 
@@ -36,7 +50,6 @@ def get_tracks():
 
         tracks.append(audio)
         track_names.append(track_name)
-
 
 def order_audio():
     temp_tracks_copy = tracks[:]
@@ -75,6 +88,9 @@ if __name__ == '__main__':
     print("Fetching tracks...")
     get_tracks()
     order_audio()
+
+    if len(ordered_tracks) == 0:
+        raise Exception("Error: Please insert tracks into ./tracks")
 
     rain_fx = AudioSegment.from_file(file="rain_sfx.mp3", format="mp3")
     rain_line = copy.copy(rain_fx)
@@ -171,6 +187,10 @@ if __name__ == '__main__':
     print("Enter a File Name:")
     name = input()
 
+    export_verification = verify_dir(EXPORT_DIR)
+    if not export_verification:
+        raise Exception("Export Directory verification failed")
+
     output_filename = os.path.join(EXPORT_DIR, name + ".mp3")
     combined_lines.export(output_filename, format="mp3")
 
@@ -188,6 +208,11 @@ if __name__ == '__main__':
 
     file.tag.artist = name
     file.tag.album_artist = name
+
+    cover_verification = verify_dir(IMAGE_DIR)
+
+    if not cover_verification:
+        raise Exception("Cover Directory verification failed")
 
     image = os.listdir(IMAGE_DIR)
 
