@@ -8,17 +8,32 @@ CHUNK_DIR = "chunk_data"
 INPUT_CHUNK_FILE = os.getcwd() + "/chunk_data/input.npy"
 OUTPUT_CHUNK_FILE = os.getcwd() + "/chunk_data/output.npy"
 
-SONG_DIR = "tracks"
-EXPORT_DIR = "output"
-IMAGE_DIR = "cover"
+SONG_DIR = os.getcwd() + "/tracks"
+EXPORT_DIR = os.getcwd() + "/output"
+IMAGE_DIR = os.getcwd() + "/cover"
 
-# Confirms that the directory <dir> exists, and if it does not, attempts the create it. Returns true if the
-# directory exists at function return time, and false otherwise.
-def verify_dir(dir: str):
-    if not os.path.isdir(dir):
+"""
+Confirms that the directory <dir> exists, and if it does not, attempts the create it
+
+:param
+    -   directory: The absolute directory to check the existence of
+:exception
+    - OSError: Directory does not exist and was failed to be created
+"""
+def verify_dir(directory: str):
+    abs_dir = os.getcwd() + directory
+    if not os.path.isdir(abs_dir):
         try:
-            os.makedirs(dir)
+            os.makedirs(abs_dir)
             return True
         except OSError:
-            return False
-    return True
+            raise Exception(f"{abs_dir} Directory verification failed")
+
+
+"""
+Verifies that all required directories exist
+"""
+def verify_setup():
+    verify_dir(SONG_DIR)
+    verify_dir(EXPORT_DIR)
+    verify_dir(IMAGE_DIR)

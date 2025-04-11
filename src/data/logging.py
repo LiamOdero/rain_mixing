@@ -5,37 +5,54 @@ from rain_mixing.src.utils.utils import *
 
 CHUNKS = 100
 
-def log_dbfs(input_track: AudioSegment, output_track: AudioSegment):
-    verify_dir(CHUNK_DIR)
-    length = input_track.duration_seconds * S_TO_MS
-    chunk_length = length // CHUNKS
+"""
+Takes in the completed edits and saves <CHUNKS> dBFS samples from each corresponding input and output track
 
-    input_chunks = make_chunks(input_track, chunk_length)
-    input_dbfs = np.array([[chunk.dBFS for chunk in input_chunks]])
+:param
+    -   input_tracks: A list of all original tracks that were edited in user-specified order
+    -   output_tracks: A list of all edited tracks in user-specified order
+"""
+def log_dbfs(input_tracks: list[AudioSegment], output_tracks: list[AudioSegment]):
+    input_dbfs = np.empty((len(input_tracks), CHUNKS))
+    output_dbfs = np.empty((len(output_tracks), CHUNKS))
+    # Getting chunked dBFS per each track
+    for i in range(len(input_tracks)):
+        input_track = input_tracks[i]
+        output_track = output_tracks[i]
 
-    output_chunks = make_chunks(output_track, chunk_length)
-    output_dbfs = np.array([[chunk.dBFS for chunk in output_chunks]])
+        # Computing how long to make each chunk to ensure that there will be <CHUNKS> many
+        length = input_track.duration_seconds * S_TO_MS
+        chunk_length = np.ceil(length / CHUNKS)
 
-    chunk_verification = verify_dir(CHUNK_DIR)
-    if not chunk_verification:
-        raise Exception("Chunk Directory verification failed")
+        input_chunks = make_chunks(input_track, chunk_length)
+        # TODO: remove eventually
+        assert len(input_chunks) == CHUNKS
+        input_dbfs[i] = np.array([[chunk.dBFS for chunk in input_chunks]])
 
+        output_chunks = make_chunks(output_track, chunk_length)
+        output_dbfs[i] = np.array([[chunk.dBFS for chunk in output_chunks]])
+
+    # Logging the data to a file
     merge_npy_data(input_dbfs, INPUT_CHUNK_FILE)
     merge_npy_data(output_dbfs, OUTPUT_CHUNK_FILE)
 
-    with open(OUTPUT_CHUNK_FILE, "rb") as f:
-        test = np.load(f)
-        pass
+"""
+Merges potentially existing chunked dBFS data with <new_data> and saves it to disk
 
-
+:param 
+    -   new_data: the new chunked dBFS data to save
+    -   filename: The absolute path to where chunked dBFS data should be merged from and saved
+"""
 def merge_npy_data(new_data: np.array, filename: str):
-
+    # Creating the merged data
     if os.path.isfile(filename):
+        # Only merge data if the required file already exists, as otherwise it will fail
         with open(filename, "rb") as f:
             existing_data = np.load(f)
             merged_data = np.concatenate((existing_data, new_data), axis=0)
     else:
         merged_data = new_data
 
+    # Saving the merged data
     with open(filename, "wb") as f:
         np.save(f, merged_data)

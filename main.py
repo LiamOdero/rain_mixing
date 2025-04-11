@@ -25,13 +25,9 @@ ordered_track_names = []
 input_averages = []
 output_averages = []
 
+
 # Loads all tracks in SONG_DIR to memory and adds the audio data to <tracks>, file names to <track_name>
 def get_tracks():
-    song_verification = verify_dir(SONG_DIR)
-
-    if not song_verification:
-        raise Exception("Track Directory verification failed")
-
     for filename in tqdm(os.listdir(SONG_DIR)):
         if filename != "ignore":
             f = os.path.join(SONG_DIR, filename)
@@ -80,6 +76,7 @@ def order_audio():
 
 
 if __name__ == '__main__':
+    verify_setup()
 
     print("Fetching tracks...")
     get_tracks()
@@ -165,12 +162,12 @@ if __name__ == '__main__':
                     if i < len(tracks) - 1:
                         track_line = track_line.append(silent)
 
-                log_dbfs(ordered_tracks[i], curr_track)
-
             combined_tracks = curr_rain.overlay(curr_track)
             print("Processing...")
 
     print("Finalizing...")
+
+    log_dbfs(ordered_tracks, track_line)
 
     while rain_line.duration_seconds < track_line.duration_seconds:
         rain_line = rain_line.append(rain_fx)
@@ -183,10 +180,6 @@ if __name__ == '__main__':
 
     print("Enter a File Name:")
     name = input()
-
-    export_verification = verify_dir(EXPORT_DIR)
-    if not export_verification:
-        raise Exception("Export Directory verification failed")
 
     output_filename = os.path.join(EXPORT_DIR, name + ".mp3")
     combined_lines.export(output_filename, format="mp3")
@@ -205,11 +198,6 @@ if __name__ == '__main__':
 
     file.tag.artist = name
     file.tag.album_artist = name
-
-    cover_verification = verify_dir(IMAGE_DIR)
-
-    if not cover_verification:
-        raise Exception("Cover Directory verification failed")
 
     image = os.listdir(IMAGE_DIR)
 
