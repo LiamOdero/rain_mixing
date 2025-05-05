@@ -2,15 +2,14 @@ import os
 
 # TODO: consider splitting some constants into directory specific util files
 S_TO_MS = 1000
-CHUNK_DIR = "chunk_data"
 
 # TODO: file paths
-INPUT_CHUNK_FILE = os.getcwd() + "/chunk_data/input.npy"
-OUTPUT_CHUNK_FILE = os.getcwd() + "/chunk_data/output.npy"
+INPUT_DATA_DIR = os.getcwd() + "\\loging\\input_data"
+OUTPUT_DATA_DIR = os.getcwd() + "\\loging\\output_data"
 
-SONG_DIR = os.getcwd() + "/tracks"
-EXPORT_DIR = os.getcwd() + "/output"
-IMAGE_DIR = os.getcwd() + "/cover"
+SONG_DIR = os.getcwd() + "\\tracks"
+EXPORT_DIR = os.getcwd() + "\\output"
+IMAGE_DIR = os.getcwd() + "\\cover"
 
 """
 Confirms that the directory <dir> exists, and if it does not, attempts the create it
@@ -21,7 +20,7 @@ Confirms that the directory <dir> exists, and if it does not, attempts the creat
     - OSError: Directory does not exist and was failed to be created
 """
 def verify_dir(directory: str):
-    abs_dir = os.getcwd() + directory
+    abs_dir = directory
     if not os.path.isdir(abs_dir):
         try:
             os.makedirs(abs_dir)
@@ -37,3 +36,8 @@ def verify_setup():
     verify_dir(SONG_DIR)
     verify_dir(EXPORT_DIR)
     verify_dir(IMAGE_DIR)
+
+
+def verify_logging_setup():
+    verify_dir(INPUT_DATA_DIR)
+    verify_dir(OUTPUT_DATA_DIR)

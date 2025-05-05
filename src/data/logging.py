@@ -6,13 +6,35 @@ from rain_mixing.src.utils.utils import *
 CHUNKS = 100
 
 """
-Takes in the completed edits and saves <CHUNKS> dBFS samples from each corresponding input and output track
+Takes in an unmodified track and it's edit and saves it to the corresponding logging folder
 
 :param
-    -   input_tracks: A list of all original tracks that were edited in user-specified order
-    -   output_tracks: A list of all edited tracks in user-specified order
+    -   input_track: An unmodified track that the user has edited
+    -   output_track: The edited version of <input_track>
 """
-def log_dbfs(input_tracks: list[AudioSegment], output_tracks: list[AudioSegment]):
+def log_edit(input_track: AudioSegment, output_track: AudioSegment):
+    curr_length = len([name for name in os.listdir(INPUT_DATA_DIR) if os.path.isfile(name)])\
+
+    input_filename = os.path.join(INPUT_DATA_DIR, f"input_{curr_length}.mp3")
+    input_track.export(input_filename)
+
+    output_filename = os.path.join(OUTPUT_DATA_DIR, f"output_{curr_length}.mp3")
+    output_track.export(output_filename)
+
+
+"""
+Takes in the completed edits and saves <CHUNKS> dBFS samples from each corresponding input and output track
+This is mainly intended to be used as input for non-transformers models
+
+:param
+    -   input_tracks: An ordered list of all original tracks that were edited 
+    -   output_tracks: An ordered list of all edited tracks. Each index corresponds to the same track in <input_tracks>
+    
+:return
+    -   input_dbfs: A 2D npy list of dBFS data that is dimension len(input_tracks) x <CHUNKS>
+    -   output_dbfs: A 2D npy list of dBFS data that is dimension len(input_tracks) x <CHUNKS>
+"""
+def chunk_dbfs(input_tracks: list[AudioSegment], output_tracks: list[AudioSegment]):
     input_dbfs = np.empty((len(input_tracks), CHUNKS))
     output_dbfs = np.empty((len(output_tracks), CHUNKS))
     # Getting chunked dBFS per each track
@@ -32,9 +54,7 @@ def log_dbfs(input_tracks: list[AudioSegment], output_tracks: list[AudioSegment]
         output_chunks = make_chunks(output_track, chunk_length)
         output_dbfs[i] = np.array([[chunk.dBFS for chunk in output_chunks]])
 
-    # Logging the data to a file
-    merge_npy_data(input_dbfs, INPUT_CHUNK_FILE)
-    merge_npy_data(output_dbfs, OUTPUT_CHUNK_FILE)
+    return input_dbfs, output_dbfs
 
 """
 Merges potentially existing chunked dBFS data with <new_data> and saves it to disk

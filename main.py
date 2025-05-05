@@ -8,7 +8,7 @@ from tqdm import tqdm
 from numpy import argmin, argmax
 import copy
 
-from rain_mixing.src.data.logging import log_dbfs
+from rain_mixing.src.data.logging import log_edit
 from rain_mixing.src.utils.utils import *
 
 SILENCE_DUR = 2500
@@ -25,8 +25,11 @@ ordered_track_names = []
 input_averages = []
 output_averages = []
 
+LOGGING = True
 
-# Loads all tracks in SONG_DIR to memory and adds the audio data to <tracks>, file names to <track_name>
+"""
+Loads all tracks in SONG_DIR to memory and adds the audio data to <tracks>, file names to <track_name>
+"""
 def get_tracks():
     for filename in tqdm(os.listdir(SONG_DIR)):
         if filename != "ignore":
@@ -41,14 +44,22 @@ def get_tracks():
             tracks.append(audio)
             track_names.append(track_name)
 
-# Allows the user to order tracks in the output track manually or by random sort
+"""
+Allows the user to order tracks in the output track manually or by random sort
+"""
 def order_audio():
+    # TODO: Switch to index array implementation
+    # Array to track indexes that we can still use
     temp_tracks_copy = tracks[:]
     temp_names_copy = track_names[:]
+
+    # Flag for when we should just randomize all future choices
     random_all = False
 
+    # Ordering process proceeds until all tracks are ordered
     while len(ordered_tracks) < len(tracks):
         if not random_all:
+            # Branch for manual selection
             for i in range(len(temp_names_copy)):
                 print("[" + str(i) + "] " + temp_names_copy[i])
             print("Enter index of track choice " + str(
@@ -63,10 +74,12 @@ def order_audio():
                     if choice == -2:
                         random_all = True
                     index = random.randint(0, len(temp_tracks_copy) - 1)
-
             except:
+                # TODO: fix
+                # if choice is not a number, just choose a random value
                 index = random.randint(0, len(temp_tracks_copy) - 1)
         else:
+            # branch for random selection
             index = index = random.randint(0, len(temp_tracks_copy) - 1)
 
         ordered_tracks.append(temp_tracks_copy[index])
@@ -76,7 +89,11 @@ def order_audio():
 
 
 if __name__ == '__main__':
+    # Confirm that all directories are in place
     verify_setup()
+
+    if LOGGING:
+        verify_logging_setup()
 
     print("Fetching tracks...")
     get_tracks()
@@ -86,20 +103,24 @@ if __name__ == '__main__':
         raise Exception("Error: Please insert tracks into ./tracks")
 
     rain_fx = AudioSegment.from_file(file="rain_sfx.mp3", format="mp3")
+
+    # rain_line will store consecutive rain sfx tracks
     rain_line = copy.copy(rain_fx)
 
+    # track_line will store all consectuive edited user tracks with silences in between
     track_line = None
     silent = AudioSegment.silent(SILENCE_DUR)
 
+    # Tracks where in track_line the current segment begins
     segment_start = 0
 
     for i in range(len(ordered_tracks)):
         curr_track = ordered_tracks[i]
         curr_name = ordered_track_names[i]
         curr_finished = False
-
         curr_len = curr_track.duration_seconds
 
+        # TODO: just swap with rain_line outright?
         curr_rain = copy.copy(rain_line)
         while curr_rain.duration_seconds < curr_len:
             curr_rain = curr_rain.append(rain_fx)
@@ -109,14 +130,19 @@ if __name__ == '__main__':
 
         curr_track = curr_track.fade_out(FADE_OUT).fade_in(FADE_IN)
 
+        # Using dBFS to locate the loudest and quitest point in the current track barring fade in/out parts
         chunks = make_chunks(curr_track, 1000)
         levels = [chunk.dBFS for chunk in chunks[(FADE_IN // 1000):-(FADE_OUT // 1000) - 1]]
 
         lowest = max(argmin(levels) * 1000 - FADE_IN, 0)
         highest = max(argmax(levels) * 1000 - FADE_IN, 0)
 
+        # TODO: remove
+        # Current automatic adjustment towards ideal track audio level
         target_diff = TARGET_DBFS - curr_track.dBFS
         curr_track = curr_track + target_diff
+
+        # combined_tracks is only used to be played to the user
         combined_tracks = curr_rain.overlay(curr_track)
         print("Currently Editing " + str(i + 1) + "/" + str(len(ordered_tracks)) + ": " + curr_name)
 
@@ -124,8 +150,8 @@ if __name__ == '__main__':
 
         while not curr_finished:
             play_thread = Process(target=play, args=(combined_tracks[curr_start:],))
-
             play_thread.start()
+
             choice = ""
             while choice != "l" and choice != "h" and choice != "r" and choice != "a" and choice != "d":
                 print("Options: [l] Play lowest point [h] Play highest point [r] Replay [a] Adjust volume [d] Finish")
@@ -162,13 +188,14 @@ if __name__ == '__main__':
                     if i < len(tracks) - 1:
                         track_line = track_line.append(silent)
 
-            combined_tracks = curr_rain.overlay(curr_track)
+                if LOGGING:
+                    print("Logging data....")
+                    log_edit(ordered_tracks[i], curr_track)
+
             print("Processing...")
+            combined_tracks = curr_rain.overlay(curr_track)
 
     print("Finalizing...")
-
-    log_dbfs(ordered_tracks, track_line)
-
     while rain_line.duration_seconds < track_line.duration_seconds:
         rain_line = rain_line.append(rain_fx)
 
