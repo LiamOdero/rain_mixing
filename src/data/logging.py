@@ -13,7 +13,7 @@ Takes in an unmodified track and it's edit and saves it to the corresponding log
     -   output_track: The edited version of <input_track>
 """
 def log_edit(input_track: AudioSegment, output_track: AudioSegment):
-    curr_length = len([name for name in os.listdir(INPUT_DATA_DIR) if os.path.isfile(name)])\
+    curr_length = len([name for name in os.listdir(INPUT_DATA_DIR) if wrapped_is_file(INPUT_DATA_DIR, name)])
 
     input_filename = os.path.join(INPUT_DATA_DIR, f"input_{curr_length}.mp3")
     input_track.export(input_filename)
@@ -57,22 +57,25 @@ def chunk_dbfs(input_tracks: list[AudioSegment], output_tracks: list[AudioSegmen
     return input_dbfs, output_dbfs
 
 """
-Merges potentially existing chunked dBFS data with <new_data> and saves it to disk
+Reads data from the logging directory and creates an array of input and output tracks
 
-:param 
-    -   new_data: the new chunked dBFS data to save
-    -   filename: The absolute path to where chunked dBFS data should be merged from and saved
+:return
+    -   input_data: Unmodified tracks that have been selected by users 
+    -   output_data: Tracks that have had they volumes modified by users
 """
-def merge_npy_data(new_data: np.array, filename: str):
-    # Creating the merged data
-    if os.path.isfile(filename):
-        # Only merge data if the required file already exists, as otherwise it will fail
-        with open(filename, "rb") as f:
-            existing_data = np.load(f)
-            merged_data = np.concatenate((existing_data, new_data), axis=0)
-    else:
-        merged_data = new_data
+def read_logging_data():
+    input_data = []
+    for name in os.listdir(INPUT_DATA_DIR):
+        if wrapped_is_file(INPUT_DATA_DIR, name):
+            abs_file = os.path.join(INPUT_DATA_DIR, name)
+            track = AudioSegment.from_file(file=abs_file, extension="mp3")
+            input_data.append(track)
 
-    # Saving the merged data
-    with open(filename, "wb") as f:
-        np.save(f, merged_data)
+    output_data = []
+    for name in os.listdir(OUTPUT_DATA_DIR):
+        if wrapped_is_file(OUTPUT_DATA_DIR, name):
+            abs_file = os.path.join(OUTPUT_DATA_DIR, name)
+            track = AudioSegment.from_file(file=abs_file, extension="mp3")
+            output_data.append(track)
+
+    return input_data, output_data
