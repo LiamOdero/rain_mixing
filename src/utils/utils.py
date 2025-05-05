@@ -4,8 +4,8 @@ import os
 S_TO_MS = 1000
 
 # TODO: file paths
-INPUT_DATA_DIR = os.getcwd() + "\\loging\\input_data"
-OUTPUT_DATA_DIR = os.getcwd() + "\\loging\\output_data"
+INPUT_DATA_DIR = os.getcwd() + "\\logging\\input_data"
+OUTPUT_DATA_DIR = os.getcwd() + "\\logging\\output_data"
 
 SONG_DIR = os.getcwd() + "\\tracks"
 EXPORT_DIR = os.getcwd() + "\\output"

@@ -48,10 +48,8 @@ def get_tracks():
 Allows the user to order tracks in the output track manually or by random sort
 """
 def order_audio():
-    # TODO: Switch to index array implementation
     # Array to track indexes that we can still use
-    temp_tracks_copy = tracks[:]
-    temp_names_copy = track_names[:]
+    index_array = [i for i in range(len(tracks))]
 
     # Flag for when we should just randomize all future choices
     random_all = False
@@ -60,32 +58,31 @@ def order_audio():
     while len(ordered_tracks) < len(tracks):
         if not random_all:
             # Branch for manual selection
-            for i in range(len(temp_names_copy)):
-                print("[" + str(i) + "] " + temp_names_copy[i])
+            for i in range(len(index_array)):
+                print("[" + str(i) + "] " + track_names[index_array[i]])
             print("Enter index of track choice " + str(
                 len(ordered_tracks) + 1) + " or -1 to randomize current, -2 to randomize remaining")
             choice = input()
 
             try:
                 choice = int(choice)
-                if 0 <= choice < len(temp_tracks_copy):
+                if 0 <= choice < len(index_array):
                     index = choice
                 else:
                     if choice == -2:
                         random_all = True
-                    index = random.randint(0, len(temp_tracks_copy) - 1)
+                    index = random.randint(0, len(index_array) - 1)
             except:
                 # TODO: fix
                 # if choice is not a number, just choose a random value
-                index = random.randint(0, len(temp_tracks_copy) - 1)
+                index = random.randint(0, len(index_array) - 1)
         else:
             # branch for random selection
-            index = index = random.randint(0, len(temp_tracks_copy) - 1)
+            index = index = random.randint(0, len(index_array) - 1)
 
-        ordered_tracks.append(temp_tracks_copy[index])
-        ordered_track_names.append(temp_names_copy[index])
-        del temp_tracks_copy[index]
-        del temp_names_copy[index]
+        ordered_tracks.append(tracks[index_array[index]])
+        ordered_track_names.append(track_names[index_array[index]])
+        del index_array[index]
 
 
 if __name__ == '__main__':
