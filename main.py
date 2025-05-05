@@ -60,25 +60,24 @@ def order_audio():
             # Branch for manual selection
             for i in range(len(index_array)):
                 print("[" + str(i) + "] " + track_names[index_array[i]])
-            print("Enter index of track choice " + str(
-                len(ordered_tracks) + 1) + " or -1 to randomize current, -2 to randomize remaining")
-            choice = input()
 
-            try:
-                choice = int(choice)
-                if 0 <= choice < len(index_array):
-                    index = choice
-                else:
-                    if choice == -2:
-                        random_all = True
-                    index = random.randint(0, len(index_array) - 1)
-            except:
-                # TODO: fix
-                # if choice is not a number, just choose a random value
+            curr_choice = ""
+            while ((not curr_choice.lstrip('-+').isdigit()) or -2 > int(curr_choice) or
+                   len(index_array) <= int(curr_choice)):
+                print("Enter index of track choice " + str(
+                    len(ordered_tracks) + 1) + " or -1 to randomize current, -2 to randomize remaining")
+                curr_choice = input()
+
+            curr_choice = int(curr_choice)
+            if 0 <= curr_choice < len(index_array):
+                index = curr_choice
+            else:
+                if curr_choice == -2:
+                    random_all = True
                 index = random.randint(0, len(index_array) - 1)
         else:
             # branch for random selection
-            index = index = random.randint(0, len(index_array) - 1)
+            index = random.randint(0, len(index_array) - 1)
 
         ordered_tracks.append(tracks[index_array[index]])
         ordered_track_names.append(track_names[index_array[index]])
@@ -104,7 +103,7 @@ if __name__ == '__main__':
     # rain_line will store consecutive rain sfx tracks
     rain_line = copy.copy(rain_fx)
 
-    # track_line will store all consectuive edited user tracks with silences in between
+    # track_line will store all consecutive edited user tracks with silences in between
     track_line = None
     silent = AudioSegment.silent(SILENCE_DUR)
 
@@ -134,7 +133,7 @@ if __name__ == '__main__':
         lowest = max(argmin(levels) * 1000 - FADE_IN, 0)
         highest = max(argmax(levels) * 1000 - FADE_IN, 0)
 
-        # TODO: remove
+        # TODO: remove once auto mixing is completed
         # Current automatic adjustment towards ideal track audio level
         target_diff = TARGET_DBFS - curr_track.dBFS
         curr_track = curr_track + target_diff
@@ -154,35 +153,42 @@ if __name__ == '__main__':
                 print("Options: [l] Play lowest point [h] Play highest point [r] Replay [a] Adjust volume [d] Finish")
                 choice = input().lower()
 
-                if choice == "a":
-                    num_pass = False
-                    while not num_pass:
-                        try:
-                            print("Input decibel adjustment")
-                            num_choice = float(input())
-                            num_pass = True
-                            curr_track = curr_track + num_choice
-                        except:
-                            num_pass = False
+            if choice == "a":
+                # Allows user to adjust volume of the whole track
+                num_pass = False
+                while not num_pass:
+                    try:
+                        print("Input decibel adjustment")
+                        num_choice = float(input())
+                        num_pass = True
+                        curr_track = curr_track + num_choice
+                    except:
+                        num_pass = False
 
             if play_thread.is_alive():
                 play_thread.terminate()
 
             if choice == "l":
+                # Plays the quietest point in the track
                 curr_start = lowest
             elif choice == "h":
+                # Plays the quietest point in the track
                 curr_start = highest
             elif choice == "r":
+                # Plays the start of the track
                 curr_start = 0
             elif choice == "d":
+                # Adds the finished edit to the full edited track line
                 curr_finished = True
 
                 if track_line is None:
+                    # In the case of the first track, we set track_line to the current track + silence
                     track_line = curr_track.append(silent)
                 else:
                     track_line = track_line.append(curr_track)
 
                     if i < len(tracks) - 1:
+                        # If the current track is not the last, add silence at the end to add padding between tracks
                         track_line = track_line.append(silent)
 
                 if LOGGING:

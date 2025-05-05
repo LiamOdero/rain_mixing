@@ -1,9 +1,8 @@
 import os
 
-# TODO: consider splitting some constants into directory specific util files
 S_TO_MS = 1000
 
-# TODO: file paths
+# TODO: file paths for other OSes
 INPUT_DATA_DIR = os.getcwd() + "\\logging\\input_data"
 OUTPUT_DATA_DIR = os.getcwd() + "\\logging\\output_data"
 
