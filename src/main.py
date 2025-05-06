@@ -9,9 +9,9 @@ from numpy import argmin, argmax
 import copy
 import os
 
-from rain_mixing.src.rain_mixing.data.logging import log_edit
-from rain_mixing.src.rain_mixing.utils.utils import SONG_DIR, EXPORT_DIR, IMAGE_DIR
-from rain_mixing.src.rain_mixing.utils.utils import verify_setup, verify_logging_setup
+from rain_mixing.data.logging import log_edit
+from rain_mixing.utils.utils import SONG_DIR, EXPORT_DIR, IMAGE_DIR
+from rain_mixing.utils.utils import verify_setup, verify_logging_setup
 
 SILENCE_DUR = 2500
 FADE_OUT = 5000

@@ -3,8 +3,8 @@ from numpy import ndarray, dtype, float64
 from pydub import AudioSegment
 from pydub.utils import make_chunks
 import numpy as np
-from rain_mixing.src.rain_mixing.utils.utils import wrapped_is_file
-from rain_mixing.src.rain_mixing.utils.utils import (INPUT_DATA_DIR, OUTPUT_DATA_DIR,
+from ..utils.utils import wrapped_is_file
+from ..utils.utils import (INPUT_DATA_DIR, OUTPUT_DATA_DIR,
                                                      S_TO_MS)
 
 CHUNKS = 100
