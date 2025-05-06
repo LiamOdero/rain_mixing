@@ -21,6 +21,9 @@ jobs:
       - name: Lint with flake8
         run: |
           flake8
+      - name: Install ffmpeg
+        run: choco install ffmpeg --no-progress
+        shell: powershell
       - name: Run tests
         if: success() || failure()
         run: |
