@@ -2,13 +2,13 @@ import os
 
 S_TO_MS = 1000
 
-# TODO: file paths for other OSes
-INPUT_DATA_DIR = ".\\logging\\input_data"
-OUTPUT_DATA_DIR = ".\\logging\\output_data"
+SRC_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+INPUT_DATA_DIR = os.path.join(SRC_ROOT, "logging", "input_data")
+OUTPUT_DATA_DIR = os.path.join(SRC_ROOT, "logging", "output_data")
 
-SONG_DIR = ".\\tracks"
-EXPORT_DIR = ".\\output"
-IMAGE_DIR = ".\\cover"
+SONG_DIR = os.path.join(SRC_ROOT, "tracks")
+EXPORT_DIR = os.path.join(SRC_ROOT, "output")
+IMAGE_DIR = os.path.join(SRC_ROOT, "cover")
 
 """
 Confirms that the directory <dir> exists, and if it does not,
