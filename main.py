@@ -7,9 +7,11 @@ from pydub.utils import make_chunks
 from tqdm import tqdm
 from numpy import argmin, argmax
 import copy
+import os
 
 from rain_mixing.src.data.logging import log_edit
-from rain_mixing.src.utils.utils import *
+from rain_mixing.src.utils.utils import SONG_DIR, EXPORT_DIR, IMAGE_DIR
+from rain_mixing.src.utils.utils import verify_setup, verify_logging_setup
 
 SILENCE_DUR = 2500
 FADE_OUT = 5000
@@ -28,8 +30,11 @@ output_averages = []
 LOGGING = True
 
 """
-Loads all tracks in SONG_DIR to memory and adds the audio data to <tracks>, file names to <track_name>
+Loads all tracks in SONG_DIR to memory and adds the audio data to <tracks>,
+file names to <track_name>
 """
+
+
 def get_tracks():
     for filename in tqdm(os.listdir(SONG_DIR)):
         if filename != "ignore":
@@ -44,9 +49,12 @@ def get_tracks():
             tracks.append(audio)
             track_names.append(track_name)
 
+
 """
 Allows the user to order tracks in the output track manually or by random sort
 """
+
+
 def order_audio():
     # Array to track indexes that we can still use
     index_array = [i for i in range(len(tracks))]
@@ -62,10 +70,12 @@ def order_audio():
                 print("[" + str(i) + "] " + track_names[index_array[i]])
 
             curr_choice = ""
-            while ((not curr_choice.lstrip('-+').isdigit()) or -2 > int(curr_choice) or
+            while ((not curr_choice.lstrip('-+').isdigit()) or
+                   -2 > int(curr_choice) or
                    len(index_array) <= int(curr_choice)):
                 print("Enter index of track choice " + str(
-                    len(ordered_tracks) + 1) + " or -1 to randomize current, -2 to randomize remaining")
+                    len(ordered_tracks) + 1) + " or -1 to randomize current, "
+                                               "-2 to randomize remaining")
                 curr_choice = input()
 
             curr_choice = int(curr_choice)
@@ -103,7 +113,8 @@ if __name__ == '__main__':
     # rain_line will store consecutive rain sfx tracks
     rain_line = copy.copy(rain_fx)
 
-    # track_line will store all consecutive edited user tracks with silences in between
+    # track_line will store all consecutive edited user tracks with
+    # silences in between
     track_line = None
     silent = AudioSegment.silent(SILENCE_DUR)
 
@@ -126,9 +137,11 @@ if __name__ == '__main__':
 
         curr_track = curr_track.fade_out(FADE_OUT).fade_in(FADE_IN)
 
-        # Using dBFS to locate the loudest and quitest point in the current track barring fade in/out parts
+        # Using dBFS to locate the loudest and quietest point in the current
+        # track barring fade in/out parts
         chunks = make_chunks(curr_track, 1000)
-        levels = [chunk.dBFS for chunk in chunks[(FADE_IN // 1000):-(FADE_OUT // 1000) - 1]]
+        levels = [chunk.dBFS for chunk in chunks[(FADE_IN // 1000):
+                                                 -(FADE_OUT // 1000) - 1]]
 
         lowest = max(argmin(levels) * 1000 - FADE_IN, 0)
         highest = max(argmax(levels) * 1000 - FADE_IN, 0)
@@ -140,17 +153,21 @@ if __name__ == '__main__':
 
         # combined_tracks is only used to be played to the user
         combined_tracks = curr_rain.overlay(curr_track)
-        print("Currently Editing " + str(i + 1) + "/" + str(len(ordered_tracks)) + ": " + curr_name)
+        print("Currently Editing " + str(i + 1) + "/" +
+              str(len(ordered_tracks)) + ": " + curr_name)
 
         curr_start = 0
 
         while not curr_finished:
-            play_thread = Process(target=play, args=(combined_tracks[curr_start:],))
+            play_thread = Process(target=play,
+                                  args=(combined_tracks[curr_start:],))
             play_thread.start()
 
             choice = ""
-            while choice != "l" and choice != "h" and choice != "r" and choice != "a" and choice != "d":
-                print("Options: [l] Play lowest point [h] Play highest point [r] Replay [a] Adjust volume [d] Finish")
+            while (choice != "l" and choice != "h" and choice != "r"
+                   and choice != "a" and choice != "d"):
+                print("Options: [l] Play lowest point [h] Play highest point "
+                      "[r] Replay [a] Adjust volume [d] Finish")
                 choice = input().lower()
 
             if choice == "a":
@@ -162,7 +179,7 @@ if __name__ == '__main__':
                         num_choice = float(input())
                         num_pass = True
                         curr_track = curr_track + num_choice
-                    except:
+                    except ValueError:
                         num_pass = False
 
             if play_thread.is_alive():
@@ -182,13 +199,15 @@ if __name__ == '__main__':
                 curr_finished = True
 
                 if track_line is None:
-                    # In the case of the first track, we set track_line to the current track + silence
+                    # In the case of the first track, we set track_line
+                    # to the current track + silence
                     track_line = curr_track.append(silent)
                 else:
                     track_line = track_line.append(curr_track)
 
                     if i < len(tracks) - 1:
-                        # If the current track is not the last, add silence at the end to add padding between tracks
+                        # If the current track is not the last, add silence
+                        # at the end to add padding between tracks
                         track_line = track_line.append(silent)
 
                 if LOGGING:
@@ -202,7 +221,8 @@ if __name__ == '__main__':
     while rain_line.duration_seconds < track_line.duration_seconds:
         rain_line = rain_line.append(rain_fx)
 
-    if rain_line.duration_seconds * 1000 > track_line.duration_seconds * 1000 + RAIN_EXTRA:
+    if (rain_line.duration_seconds * 1000 >
+            track_line.duration_seconds * 1000 + RAIN_EXTRA):
         rain_line = rain_line[:track_line.duration_seconds * 1000 + RAIN_EXTRA]
 
     combined_lines = rain_line.overlay(track_line)
