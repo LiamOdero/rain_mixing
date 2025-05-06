@@ -1,4 +1,4 @@
-/output
-/cover
-/tracks
-/logging
+/src/output
+/src/cover
+/src/tracks
+/src/logging
