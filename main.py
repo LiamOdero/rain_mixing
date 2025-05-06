@@ -37,17 +37,16 @@ file names to <track_name>
 
 def get_tracks():
     for filename in tqdm(os.listdir(SONG_DIR)):
-        if filename != "ignore":
-            f = os.path.join(SONG_DIR, filename)
+        f = os.path.join(SONG_DIR, filename)
 
-            loc = os.path.abspath(f)
-            extension = f[-3:]
-            track_name = filename[:-4]
+        loc = os.path.abspath(f)
+        extension = f[-3:]
+        track_name = filename[:-4]
 
-            audio = AudioSegment.from_file(file=loc, format=extension)
+        audio = AudioSegment.from_file(file=loc, format=extension)
 
-            tracks.append(audio)
-            track_names.append(track_name)
+        tracks.append(audio)
+        track_names.append(track_name)
 
 
 """
