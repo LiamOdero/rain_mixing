@@ -22,5 +22,6 @@ jobs:
         run: |
           flake8
       - name: Run tests
+        if: success() || failure()
         run: |
           pytest

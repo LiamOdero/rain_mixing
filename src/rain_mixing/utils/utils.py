@@ -3,12 +3,12 @@ import os
 S_TO_MS = 1000
 
 # TODO: file paths for other OSes
-INPUT_DATA_DIR = ".\logging\input_data"
-OUTPUT_DATA_DIR = ".\logging\output_data"
+INPUT_DATA_DIR = ".\\logging\\input_data"
+OUTPUT_DATA_DIR = ".\\logging\\output_data"
 
 SONG_DIR = ".\\tracks"
-EXPORT_DIR = ".\output"
-IMAGE_DIR = ".\cover"
+EXPORT_DIR = ".\\output"
+IMAGE_DIR = ".\\cover"
 
 """
 Confirms that the directory <dir> exists, and if it does not,
