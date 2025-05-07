@@ -35,7 +35,7 @@ file names to <track_name>
 """
 
 
-def get_tracks():
+def get_tracks() -> None:
     for filename in tqdm(os.listdir(SONG_DIR)):
         f = os.path.join(SONG_DIR, filename)
 
@@ -54,7 +54,7 @@ Allows the user to order tracks in the output track manually or by random sort
 """
 
 
-def order_audio():
+def order_audio() -> None:
     # Array to track indexes that we can still use
     index_array = [i for i in range(len(tracks))]
 

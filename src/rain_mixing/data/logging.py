@@ -19,7 +19,7 @@ logging folder
 """
 
 
-def log_edit(input_track: AudioSegment, output_track: AudioSegment):
+def log_edit(input_track: AudioSegment, output_track: AudioSegment) -> None:
     curr_length = len([name for name in os.listdir(INPUT_DATA_DIR) if
                        wrapped_is_file(INPUT_DATA_DIR, name)])
 
@@ -85,7 +85,7 @@ output tracks
 """
 
 
-def read_logging_data():
+def read_logging_data() -> tuple[list[AudioSegment], list[AudioSegment]]:
     input_data = []
     for name in os.listdir(INPUT_DATA_DIR):
         if wrapped_is_file(INPUT_DATA_DIR, name):

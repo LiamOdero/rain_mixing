@@ -21,7 +21,7 @@ attempts to create it
 """
 
 
-def verify_dir(directory: str):
+def verify_dir(directory: str) -> bool:
     abs_dir = directory
     if not os.path.isdir(abs_dir):
         try:
@@ -43,7 +43,7 @@ A wrapper for os.path.isfile that accounts for directory
 """
 
 
-def wrapped_is_file(directory, filename):
+def wrapped_is_file(directory, filename) -> bool:
     abs_file = os.path.join(directory, filename)
     return os.path.isfile(abs_file)
 
@@ -53,7 +53,7 @@ Verifies that all required directories exist
 """
 
 
-def verify_setup():
+def verify_setup() -> None:
     verify_dir(SONG_DIR)
     verify_dir(EXPORT_DIR)
     verify_dir(IMAGE_DIR)
@@ -64,6 +64,6 @@ Verifies that all required directories for logging exist
 """
 
 
-def verify_logging_setup():
+def verify_logging_setup() -> None:
     verify_dir(INPUT_DATA_DIR)
     verify_dir(OUTPUT_DATA_DIR)
