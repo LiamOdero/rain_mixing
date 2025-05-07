@@ -1,8 +1,9 @@
 import os
 
+import numpy as np
 import pytest
 from rain_mixing.data.logging import (log_edit, read_logging_data,
-                                      chunk_dbfs, CHUNKS)
+                                      chunk_dbfs, CHUNKS, LOGGING_EXTENSION)
 from rain_mixing.utils.utils import verify_logging_setup
 from pydub import AudioSegment
 
@@ -80,10 +81,10 @@ Tests that the output mp3s by log_edit have the desired naming convention
 def test_log_edit_file_names() -> None:
 
     assert (os.listdir(INPUT_DIR)[-1] ==
-            f"input_{pytest.new_input_len - 1}.mp3")
+            f"input_{pytest.new_input_len - 1}.{LOGGING_EXTENSION}")
 
     assert (os.listdir(OUTPUT_DIR)[-1] ==
-            f"output_{pytest.new_output_len - 1}.mp3")
+            f"output_{pytest.new_output_len - 1}.{LOGGING_EXTENSION}")
 
 
 """
@@ -94,7 +95,7 @@ Tests that log_edit() outputted two separate files to the corresponding folders
 def test_log_edit_file_different() -> None:
     input_array, output_array = read_logging_data()
 
-    # there is some loss in audio data when writing to mp3, so an error of
+    # there is some loss in audio data when writing to wav, so an error of
     # <=+- 0. 1 is expected
     assert input_array[-1].dBFS == pytest.approx(
         output_array[-1].dBFS - 5, 0.1)
@@ -144,4 +145,4 @@ def test_chunk_dbfs_different() -> None:
     input_chunks, output_chunks = chunk_dbfs(pytest.input_array,
                                              pytest.output_array)
 
-    assert (input_chunks != output_chunks).all()
+    assert not np.array_equal(input_chunks, output_chunks)

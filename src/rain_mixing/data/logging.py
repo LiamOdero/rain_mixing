@@ -8,6 +8,7 @@ from ..utils.utils import (INPUT_DATA_DIR, OUTPUT_DATA_DIR,
                            S_TO_MS)
 
 CHUNKS = 100
+LOGGING_EXTENSION = "wav"
 
 """
 Takes in an unmodified track and it's edit and saves it to the corresponding
@@ -24,11 +25,11 @@ def log_edit(input_track: AudioSegment, output_track: AudioSegment) -> None:
                        wrapped_is_file(INPUT_DATA_DIR, name)])
 
     input_filename = os.path.join(INPUT_DATA_DIR,
-                                  f"input_{curr_length}.mp3")
+                                  f"input_{curr_length}.{LOGGING_EXTENSION}")
     input_track.export(input_filename)
 
     output_filename = os.path.join(OUTPUT_DATA_DIR,
-                                   f"output_{curr_length}.mp3")
+                                   f"output_{curr_length}.{LOGGING_EXTENSION}")
     output_track.export(output_filename)
 
 
@@ -88,14 +89,16 @@ def read_logging_data() -> tuple[list[AudioSegment], list[AudioSegment]]:
     for name in os.listdir(INPUT_DATA_DIR):
         if wrapped_is_file(INPUT_DATA_DIR, name):
             abs_file = os.path.join(INPUT_DATA_DIR, name)
-            track = AudioSegment.from_file(file=abs_file, extension="mp3")
+            track = AudioSegment.from_file(file=abs_file,
+                                           extension=f"{LOGGING_EXTENSION}")
             input_data.append(track)
 
     output_data = []
     for name in os.listdir(OUTPUT_DATA_DIR):
         if wrapped_is_file(OUTPUT_DATA_DIR, name):
             abs_file = os.path.join(OUTPUT_DATA_DIR, name)
-            track = AudioSegment.from_file(file=abs_file, extension="mp3")
+            track = AudioSegment.from_file(file=abs_file,
+                                           extension=f"{LOGGING_EXTENSION}")
             output_data.append(track)
 
     return input_data, output_data
