@@ -65,8 +65,6 @@ def chunk_dbfs(input_tracks: list[AudioSegment],
         chunk_length = np.ceil(length / CHUNKS)
 
         input_chunks = make_chunks(input_track, chunk_length)
-        # TODO: remove eventually
-        assert len(input_chunks) == CHUNKS
         input_dbfs[i] = np.array([[chunk.dBFS for chunk in input_chunks]])
 
         output_chunks = make_chunks(output_track, chunk_length)
