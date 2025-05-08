@@ -2,7 +2,7 @@ import os
 
 import numpy as np
 import pytest
-from rain_mixing.data.logging import (log_edit, read_logging_data,
+from rain_mixing.data.logging import (log_edit, read_logging_data, sample_dBFS,
                                       chunk_dbfs, CHUNKS, LOGGING_EXTENSION)
 from rain_mixing.utils.utils import verify_logging_setup
 from pydub import AudioSegment
@@ -113,6 +113,16 @@ def test_read_logs_array_check() -> None:
 
 
 """
+Tests that sample_dBFS returns an ndarray with the correct chunk count
+"""
+
+
+def test_sample_dBFS_chunks() -> None:
+    input_chunks = sample_dBFS(pytest.input_array[0])
+    assert input_chunks.shape[-1] == CHUNKS
+
+
+"""
 Tests that chunk_dbfs returns chunked the correct number of tracks
 """
 
@@ -122,18 +132,6 @@ def test_chunk_dbfs_tracks() -> None:
                                              pytest.output_array)
     assert input_chunks.shape[0] == pytest.new_input_len
     assert output_chunks.shape[0] == pytest.new_output_len
-
-
-"""
-Tests that chunk_dbfs returns two arrays with the correct chunk count
-"""
-
-
-def test_chunk_dbfs_chunks() -> None:
-    input_chunks, output_chunks = chunk_dbfs(pytest.input_array,
-                                             pytest.output_array)
-    assert input_chunks.shape[-1] == CHUNKS
-    assert output_chunks.shape[-1] == CHUNKS
 
 
 """

@@ -1,4 +1,6 @@
 import os
+from typing import Tuple, Any
+
 from numpy import ndarray, dtype, float64
 from pydub import AudioSegment
 from pydub.utils import make_chunks
@@ -34,6 +36,21 @@ def log_edit(input_track: AudioSegment, output_track: AudioSegment) -> None:
 
 
 """
+Returns a list of <CHUNKS> dBFS samples from <track>
+
+:param 
+    -   track: The track to extrack dBFS samples from
+"""
+def sample_dBFS(track: AudioSegment) -> ndarray[tuple[int, ...], dtype[Any]]:
+    # Ensure that there will be <CHUNKS> many audio chunks
+    length = track.duration_seconds * S_TO_MS
+    chunk_length = np.ceil(length / CHUNKS)
+
+    chunks = make_chunks(track, chunk_length)
+    return np.array([[chunk.dBFS for chunk in chunks]])
+
+
+"""
 Takes in the completed edits and saves <CHUNKS> dBFS samples from each
 corresponding input and output track This is mainly intended to be used as
 input for non-transformers models
@@ -54,22 +71,16 @@ input for non-transformers models
 def chunk_dbfs(input_tracks: list[AudioSegment],
                output_tracks: list[AudioSegment]) -> (
         tuple)[ndarray[dtype[float64]], ndarray[dtype[float64]]]:
+
     input_dbfs = np.empty((len(input_tracks), CHUNKS))
     output_dbfs = np.empty((len(output_tracks), CHUNKS))
     # Getting chunked dBFS per each track
     for i in range(len(input_tracks)):
         input_track = input_tracks[i]
+        input_dbfs[i] = sample_dBFS(input_track)
+
         output_track = output_tracks[i]
-
-        # Ensure that there will be <CHUNKS> many audio chunks
-        length = input_track.duration_seconds * S_TO_MS
-        chunk_length = np.ceil(length / CHUNKS)
-
-        input_chunks = make_chunks(input_track, chunk_length)
-        input_dbfs[i] = np.array([[chunk.dBFS for chunk in input_chunks]])
-
-        output_chunks = make_chunks(output_track, chunk_length)
-        output_dbfs[i] = np.array([[chunk.dBFS for chunk in output_chunks]])
+        output_dbfs[i] = sample_dBFS(output_track)
 
     return input_dbfs, output_dbfs
 
