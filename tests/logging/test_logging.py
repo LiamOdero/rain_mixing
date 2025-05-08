@@ -3,7 +3,7 @@ import os
 import numpy as np
 import pytest
 from rain_mixing.data.logging import (log_edit, read_logging_data, sample_dBFS,
-                                      chunk_dbfs, CHUNKS, LOGGING_EXTENSION)
+                                      sample_logs, CHUNKS, LOGGING_EXTENSION)
 from rain_mixing.utils.utils import verify_logging_setup
 from pydub import AudioSegment
 
@@ -79,7 +79,6 @@ Tests that the output mp3s by log_edit have the desired naming convention
 
 
 def test_log_edit_file_names() -> None:
-
     assert (os.listdir(INPUT_DIR)[-1] ==
             f"input_{pytest.new_input_len - 1}.{LOGGING_EXTENSION}")
 
@@ -123,24 +122,24 @@ def test_sample_dBFS_chunks() -> None:
 
 
 """
-Tests that chunk_dbfs returns chunked the correct number of tracks
+Tests that sample_logs returns chunked the correct number of tracks
 """
 
 
-def test_chunk_dbfs_tracks() -> None:
-    input_chunks, output_chunks = chunk_dbfs(pytest.input_array,
-                                             pytest.output_array)
+def test_sample_logs_tracks() -> None:
+    input_chunks, output_chunks = sample_logs(pytest.input_array,
+                                              pytest.output_array)
     assert input_chunks.shape[0] == pytest.new_input_len
     assert output_chunks.shape[0] == pytest.new_output_len
 
 
 """
-Tests that chunk_dbfs returns two different arrays
+Tests that sample_logs returns two different arrays
 """
 
 
-def test_chunk_dbfs_different() -> None:
-    input_chunks, output_chunks = chunk_dbfs(pytest.input_array,
-                                             pytest.output_array)
+def test_sample_logs_different() -> None:
+    input_chunks, output_chunks = sample_logs(pytest.input_array,
+                                              pytest.output_array)
 
     assert not np.array_equal(input_chunks, output_chunks)
