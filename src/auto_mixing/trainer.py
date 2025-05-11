@@ -14,6 +14,7 @@ from auto_mixing.models.MixingNN import MixingNN
 LR = 0.01
 EPOCHS = 10
 BATCH_SIZE = 32
+RANGE_REDUCTION = 100
 
 
 def train_loop(model: MixingNN, dataloader: DataLoader, optimizer: Optimizer,
@@ -27,13 +28,7 @@ def train_loop(model: MixingNN, dataloader: DataLoader, optimizer: Optimizer,
         x = x.to(device)
         y = y.to(device)
 
-        # TODO: investigate
-        x = torch.nan_to_num(x, nan=0.0, posinf=1e6, neginf=-1e6)
-        y = torch.nan_to_num(y, nan=0.0, posinf=1e6, neginf=-1e6)
-
-        # TODO: range reduction. I suspect that if the above is fixed,
-        # can just divide by 100
-        y = y / torch.max(torch.abs(y))
+        y = y / RANGE_REDUCTION
 
         optimizer.zero_grad()
 
