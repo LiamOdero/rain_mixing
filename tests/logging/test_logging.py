@@ -39,7 +39,7 @@ def setup_tests() -> None:
     pytest.curr_input_len = len(os.listdir(INPUT_DIR))
     pytest.curr_output_len = len(os.listdir(OUTPUT_DIR))
 
-    test_file_path = os.path.join(os.path.dirname(__file__), "rain_sfx.mp3")
+    test_file_path = os.path.join(SRC_ROOT, "assets", "rain_sfx.mp3")
     test_input = AudioSegment.from_file(
         file=test_file_path, format="mp3")
     test_output = test_input + 5
