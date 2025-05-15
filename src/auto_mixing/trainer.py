@@ -9,12 +9,7 @@ from rain_mixing.data.logging import CHUNKS
 from auto_mixing.data.dataloader import create_sample_dbfs_dataloaders
 from auto_mixing.models.ChunkMixingNN import ChunkMixingNN
 from auto_mixing.models.MixingNN import MixingNN
-
-LR = 0.01
-EPOCHS = 10
-BATCH_SIZE = 32
-RANGE_REDUCTION = 100
-
+from constants.model_constants import BATCH_SIZE, LR, RANGE_REDUCTION, EPOCHS
 
 def train_loop(model: MixingNN, dataloader: DataLoader, optimizer: Optimizer,
                criterion: MSELoss, device: str):

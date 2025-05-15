@@ -1,10 +1,7 @@
 import torch.utils.data as data
 from auto_mixing.data.DBFSSampleDataset import DBFSSampleDataset
 from rain_mixing.data.logging import read_logging_data, sample_logs
-
-TRAIN_RATIO = 0.7
-VALID_RATIO = 0.2
-TEST_RATIO = 0.1
+from constants.model_constants import TRAIN_RATIO, VALID_RATIO, TEST_RATIO
 
 """
 Creates a training, validation, and testing dataset using dBFS samples

@@ -4,8 +4,6 @@ from torch import nn
 import torch.nn.functional as F
 from auto_mixing.models.MixingNN import MixingNN
 
-EPSILON = 1e-09
-
 """
 Class for models which used chunked dBFS data in order to mix tracks
 """
