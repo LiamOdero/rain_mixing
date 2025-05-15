@@ -1,14 +1,6 @@
 import os
-
-S_TO_MS = 1000
-
-SRC_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
-INPUT_DATA_DIR = os.path.join(SRC_ROOT, "logging", "input_data")
-OUTPUT_DATA_DIR = os.path.join(SRC_ROOT, "logging", "output_data")
-
-SONG_DIR = os.path.join(SRC_ROOT, "tracks")
-EXPORT_DIR = os.path.join(SRC_ROOT, "output")
-IMAGE_DIR = os.path.join(SRC_ROOT, "cover")
+from constants.file_constants import (SONG_DIR, EXPORT_DIR, IMAGE_DIR,
+                                      INPUT_DATA_DIR, OUTPUT_DATA_DIR)
 
 """
 Confirms that the directory <dir> exists, and if it does not,

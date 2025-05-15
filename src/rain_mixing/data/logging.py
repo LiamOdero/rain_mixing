@@ -5,8 +5,8 @@ from pydub import AudioSegment
 from pydub.utils import make_chunks
 import numpy as np
 from ..utils.utils import wrapped_is_file
-from ..utils.utils import (INPUT_DATA_DIR, OUTPUT_DATA_DIR,
-                           S_TO_MS)
+from constants.file_constants import (INPUT_DATA_DIR, OUTPUT_DATA_DIR)
+from constants.audio_constants import S_TO_MS
 
 CHUNKS = 100
 LOGGING_EXTENSION = "wav"
