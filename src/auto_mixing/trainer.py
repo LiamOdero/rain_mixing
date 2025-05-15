@@ -5,7 +5,7 @@ from torch.optim import Optimizer
 from torch.utils import data
 from torch.utils.data import DataLoader
 from tqdm import trange, tqdm
-from rain_mixing.data.logging import CHUNKS
+from auto_mixing.data.logging import CHUNKS
 from auto_mixing.data.dataloader import create_sample_dbfs_dataloaders
 from auto_mixing.models.ChunkMixingNN import ChunkMixingNN
 from auto_mixing.models.MixingNN import MixingNN

@@ -2,7 +2,7 @@ import os
 
 import numpy as np
 import pytest
-from rain_mixing.data.logging import (log_edit, read_logging_data, sample_dBFS,
+from auto_mixing.data.logging import (log_edit, read_logging_data, sample_dBFS,
                                       sample_logs)
 from constants.file_constants import (LOGGING_EXTENSION, CHUNKS, ROOT,
                                       INPUT_DATA_DIR, OUTPUT_DATA_DIR)

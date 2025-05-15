@@ -1,6 +1,6 @@
 import torch.utils.data as data
 from auto_mixing.data.DBFSSampleDataset import DBFSSampleDataset
-from rain_mixing.data.logging import read_logging_data, sample_logs
+from auto_mixing.data.logging import read_logging_data, sample_logs
 from constants.model_constants import TRAIN_RATIO, VALID_RATIO, TEST_RATIO
 
 """
