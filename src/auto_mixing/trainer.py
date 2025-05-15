@@ -11,6 +11,7 @@ from auto_mixing.models.ChunkMixingNN import ChunkMixingNN
 from auto_mixing.models.MixingNN import MixingNN
 from constants.model_constants import BATCH_SIZE, LR, RANGE_REDUCTION, EPOCHS
 
+
 def train_loop(model: MixingNN, dataloader: DataLoader, optimizer: Optimizer,
                criterion: MSELoss, device: str):
     epoch_loss = 0
