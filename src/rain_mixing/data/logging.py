@@ -5,11 +5,9 @@ from pydub import AudioSegment
 from pydub.utils import make_chunks
 import numpy as np
 from ..utils.utils import wrapped_is_file
-from constants.file_constants import (INPUT_DATA_DIR, OUTPUT_DATA_DIR)
+from constants.file_constants import (INPUT_DATA_DIR, OUTPUT_DATA_DIR,
+                                      CHUNKS, LOGGING_EXTENSION)
 from constants.audio_constants import S_TO_MS
-
-CHUNKS = 100
-LOGGING_EXTENSION = "wav"
 
 """
 Takes in an unmodified track and it's edit and saves it to the corresponding
