@@ -1,4 +1,3 @@
-import numpy as np
 import torch
 from pydub import AudioSegment
 from torch import nn
@@ -27,6 +26,7 @@ class ChunkMixingNN(MixingNN):
         # x = [batch_size, CHUNKS]
 
         b = self.input_BN(x)
+        # b = [batch_size, CHUNKS]
 
         h_1 = F.relu(self.input_fc(b))
         # h_1 = [batch_size, 128]
@@ -38,17 +38,7 @@ class ChunkMixingNN(MixingNN):
 
     @classmethod
     def mix_track(cls, track: AudioSegment) -> AudioSegment:
-        track_dBFS_samples = sample_dBFS(track)
-
-        # Reshaping for use in the forward pass
-        track_dBFS_samples = torch.tensor(track_dBFS_samples)
-        track_dBFS_samples = torch.unsqueeze(track_dBFS_samples, 0)
-
-        new_dBFS = None  # to be used in forward pass
-
-        # TODO: Expand new_dbfs and add to track
-
-        return track
+        pass
 
     @staticmethod
     def get_accuracy(pred, y):

@@ -1,4 +1,3 @@
-import numpy as np
 import torch
 from torch import nn, optim
 from torch.nn import MSELoss
@@ -45,8 +44,9 @@ def train_loop(model: MixingNN, dataloader: DataLoader, optimizer: Optimizer,
 
     return epoch_loss / len(dataloader), epoch_acc / len(dataloader)
 
+
 def evaluate(model: MixingNN, dataloader: DataLoader, optimizer: Optimizer,
-               criterion: MSELoss, device: str):
+             criterion: MSELoss, device: str):
     epoch_loss = 0
     epoch_acc = 0
 
@@ -93,6 +93,7 @@ def train_model():
             f'Train Acc: {train_acc * 100:.2f}%')
 
     return model
+
 
 if __name__ == "__main__":
     model = train_model()
