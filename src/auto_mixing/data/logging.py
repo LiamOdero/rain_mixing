@@ -43,11 +43,11 @@ Returns a list of <CHUNKS> dBFS samples from <track>
 def sample_dBFS(track: AudioSegment) -> ndarray[tuple[int, ...], dtype[Any]]:
     # Ensure that there will be <CHUNKS> many audio chunks
     length = track.duration_seconds * S_TO_MS
-    chunk_length = np.floor(length / CHUNKS)
+    chunk_length = np.ceil(length / CHUNKS)
 
     chunks = make_chunks(track, chunk_length)
 
-    chunk_dBFS = np.array([[chunk.dBFS for chunk in chunks[:-1]]])
+    chunk_dBFS = np.array([[chunk.dBFS for chunk in chunks]])
     # TODO: see if -1e2 is sufficient
     chunk_dBFS = np.nan_to_num(chunk_dBFS, nan=0.0, neginf=-1e2)
 

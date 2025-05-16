@@ -28,7 +28,9 @@ def train_loop(model: MixingNN, dataloader: DataLoader, optimizer: Optimizer,
         optimizer.zero_grad()
 
         pred = model(x)
-        loss = criterion(pred, y)
+        # Scale predictions and targets since we are working with values
+        # in the range ~(0, 1), so MSE appears very small when acc is bad
+        loss = criterion(pred * RANGE_REDUCTION, y * RANGE_REDUCTION)
 
         acc = model.get_accuracy(pred, y)
 
