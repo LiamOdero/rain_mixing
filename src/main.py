@@ -36,6 +36,7 @@ file names to <track_name>
 
 
 def get_tracks() -> None:
+    total_length = 0
     for filename in tqdm(os.listdir(SONG_DIR)):
         f = os.path.join(SONG_DIR, filename)
 
@@ -47,6 +48,10 @@ def get_tracks() -> None:
 
         tracks.append(audio)
         track_names.append(track_name)
+
+        total_length += audio.duration_seconds
+
+    print(f"Approximate Length: {total_length // 60} minutes")
 
 
 """
