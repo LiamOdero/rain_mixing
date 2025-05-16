@@ -43,21 +43,21 @@ def train_loop(model: MixingNN, dataloader: DataLoader, optimizer: Optimizer,
     return epoch_loss / len(dataloader), epoch_acc / len(dataloader)
 
 
-def evaluate(model: MixingNN, dataloader: DataLoader, optimizer: Optimizer,
+def evaluate(model: MixingNN, dataloader: DataLoader,
              criterion: MSELoss, device: str):
     epoch_loss = 0
     epoch_acc = 0
 
     model.eval()
 
-    for (x, y) in tqdm(dataloader, desc="Training", leave=False):
+    for (x, y) in dataloader:
         x = x.to(device)
         y = y.to(device)
 
-        optimizer.zero_grad()
+        y = y / RANGE_REDUCTION
 
-        pred, _ = model(x)
-        loss = criterion(pred, y)
+        pred = model(x)
+        loss = criterion(pred * RANGE_REDUCTION, y * RANGE_REDUCTION)
 
         acc = model.get_accuracy(pred, y)
 
@@ -69,8 +69,12 @@ def evaluate(model: MixingNN, dataloader: DataLoader, optimizer: Optimizer,
 
 def train_model():
     train_data, valid_data, test_data = create_sample_dbfs_dataloaders()
-    dataloader = data.DataLoader(train_data, shuffle=True,
-                                 batch_size=BATCH_SIZE)
+    train_dataloader = data.DataLoader(train_data, shuffle=True,
+                                       batch_size=BATCH_SIZE)
+    valid_dataloader = data.DataLoader(valid_data, shuffle=True,
+                                       batch_size=BATCH_SIZE)
+    test_dataloader = data.DataLoader(test_data, shuffle=True,
+                                      batch_size=BATCH_SIZE)
 
     model = ChunkMixingNN(CHUNKS, CHUNKS)
 
@@ -82,13 +86,19 @@ def train_model():
     criterion = criterion.to(device)
 
     for epoch in trange(EPOCHS):
-        train_loss, train_acc = train_loop(model, dataloader, optimizer,
+        train_loss, train_acc = train_loop(model, train_dataloader, optimizer,
                                            criterion, device)
 
         print(f'Epoch: {epoch + 1:02} ')
         print(
             f'\tTrain Loss: {train_loss:.3f} | '
             f'Train Acc: {train_acc * 100:.2f}%')
+
+        valid_loss, valid_acc = evaluate(model, valid_dataloader, criterion,
+                                         device)
+        print(
+            f'\tValid Loss: {valid_loss:.3f} | '
+            f'Valid Acc: {valid_acc * 100:.2f}%')
 
     return model
 

@@ -4,6 +4,8 @@ from numpy import ndarray, dtype, float64
 from pydub import AudioSegment
 from pydub.utils import make_chunks
 import numpy as np
+from tqdm import tqdm
+
 from rain_mixing.utils.utils import wrapped_is_file
 from constants.file_constants import (INPUT_DATA_DIR, OUTPUT_DATA_DIR,
                                       CHUNKS, LOGGING_EXTENSION)
@@ -100,7 +102,8 @@ output tracks
 
 def read_logging_data() -> tuple[list[AudioSegment], list[AudioSegment]]:
     input_data = []
-    for name in os.listdir(INPUT_DATA_DIR):
+    print("importing input data...")
+    for name in tqdm(os.listdir(INPUT_DATA_DIR)):
         if wrapped_is_file(INPUT_DATA_DIR, name):
             abs_file = os.path.join(INPUT_DATA_DIR, name)
             track = AudioSegment.from_file(file=abs_file,
@@ -108,7 +111,8 @@ def read_logging_data() -> tuple[list[AudioSegment], list[AudioSegment]]:
             input_data.append(track)
 
     output_data = []
-    for name in os.listdir(OUTPUT_DATA_DIR):
+    print("importing output data...")
+    for name in tqdm(os.listdir(OUTPUT_DATA_DIR)):
         if wrapped_is_file(OUTPUT_DATA_DIR, name):
             abs_file = os.path.join(OUTPUT_DATA_DIR, name)
             track = AudioSegment.from_file(file=abs_file,

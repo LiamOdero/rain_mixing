@@ -3,7 +3,6 @@ import numpy as np
 import torch
 from pydub import AudioSegment
 from torch import nn
-import torch.nn.functional as F
 from auto_mixing.models.MixingNN import MixingNN
 from constants.audio_constants import S_TO_MS
 from constants.file_constants import CHUNKS
@@ -18,25 +17,25 @@ class ChunkMixingNN(MixingNN):
     def __init__(self, input_dim: int, output_dim: int):
         super().__init__()
 
-        self.input_BN = nn.BatchNorm1d(input_dim)
-        self.input_fc = nn.Linear(input_dim, 128)
+        self.hidden_layers = nn.Sequential(
+            nn.BatchNorm1d(input_dim),
 
-        self.hidden_fc = nn.Linear(128, 100)
-        self.output_fc = nn.Linear(100, output_dim)
+            nn.Linear(input_dim, 512),
+            nn.ReLU(),
+
+            nn.Linear(512, 256),
+            nn.ReLU(),
+            nn.Dropout(p=0.5)
+        )
+
+        self.output_fc = nn.Linear(256, output_dim)
 
     def forward(self, x):
         # x = [batch_size, CHUNKS]
 
-        b = self.input_BN(x)
-        # b = [batch_size, CHUNKS]
+        h = self.hidden_layers(x)
 
-        h_1 = F.relu(self.input_fc(b))
-        # h_1 = [batch_size, 128]
-
-        h_2 = F.relu(self.hidden_fc(h_1))
-        # h_2 = [128, 128]
-
-        return self.output_fc(h_2)
+        return self.output_fc(h)
 
     def mix_track(self, track: AudioSegment) -> AudioSegment:
         dBFS_samples = sample_dBFS(track)
