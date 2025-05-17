@@ -80,7 +80,7 @@ def test_log_edit_file_names() -> None:
     assert (f"input_{pytest.new_input_len - 1}.{LOGGING_EXTENSION}" in
             os.listdir(INPUT_DATA_DIR))
 
-    assert (f"input_{pytest.new_output_len - 1}.{LOGGING_EXTENSION}" in
+    assert (f"output_{pytest.new_output_len - 1}.{LOGGING_EXTENSION}" in
             os.listdir(OUTPUT_DATA_DIR))
 
 
