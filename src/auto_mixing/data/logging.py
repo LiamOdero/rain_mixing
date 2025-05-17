@@ -5,10 +5,10 @@ from pydub import AudioSegment
 from pydub.utils import make_chunks
 import numpy as np
 from tqdm import tqdm
-
 from rain_mixing.utils.utils import wrapped_is_file
 from constants.file_constants import (INPUT_DATA_DIR, OUTPUT_DATA_DIR,
-                                      CHUNKS, LOGGING_EXTENSION)
+                                      LOGGING_EXTENSION)
+from constants.model_constants import CHUNKS
 from constants.audio_constants import S_TO_MS
 
 """
@@ -45,13 +45,18 @@ Returns a list of <CHUNKS> dBFS samples from <track>
 def sample_dBFS(track: AudioSegment) -> ndarray[tuple[int, ...], dtype[Any]]:
     # Ensure that there will be <CHUNKS> many audio chunks
     length = track.duration_seconds * S_TO_MS
-    chunk_length = np.ceil(length / CHUNKS)
+    chunk_length = length // CHUNKS
 
     chunks = make_chunks(track, chunk_length)
 
-    chunk_dBFS = np.array([[chunk.dBFS for chunk in chunks]])
+    chunk_dBFS = np.array([chunk.dBFS for chunk in chunks])
     # TODO: see if -1e2 is sufficient
     chunk_dBFS = np.nan_to_num(chunk_dBFS, nan=0.0, neginf=-1e2)
+
+    if chunk_dBFS.shape[0] > CHUNKS:
+        average = np.average(chunk_dBFS[CHUNKS - 1:])
+        chunk_dBFS[CHUNKS - 1] = average
+        chunk_dBFS = chunk_dBFS[:CHUNKS]
 
     return chunk_dBFS
 
@@ -67,9 +72,9 @@ input for non-transformers models
     corresponds to the same track in <input_tracks>
 
 :return
-    -   input_dbfs: A 2D npy list of dBFS data that is dimension
+    -   input_dBFS: A 2D npy list of dBFS data that is dimension
     len(input_tracks) x <CHUNKS>
-    -   output_dbfs: A 2D npy list of dBFS data that is dimension
+    -   output_dBFS: A 2D npy list of dBFS data that is dimension
     len(input_tracks) x <CHUNKS>
 """
 
@@ -77,17 +82,18 @@ input for non-transformers models
 def sample_logs(input_tracks: list[AudioSegment],
                 output_tracks: list[AudioSegment]) -> (
         tuple)[ndarray[dtype[float64]], ndarray[dtype[float64]]]:
-    input_dbfs = np.empty((len(input_tracks), CHUNKS))
-    output_dbfs = np.empty((len(output_tracks), CHUNKS))
+    input_dBFS = np.empty((len(input_tracks), CHUNKS))
+    output_dBFS = np.empty((len(output_tracks), CHUNKS))
+
     # Getting chunked dBFS per each track
     for i in range(len(input_tracks)):
         input_track = input_tracks[i]
-        input_dbfs[i] = sample_dBFS(input_track)
+        input_dBFS[i] = sample_dBFS(input_track)
 
         output_track = output_tracks[i]
-        output_dbfs[i] = sample_dBFS(output_track)
+        output_dBFS[i] = sample_dBFS(output_track)
 
-    return input_dbfs, output_dbfs
+    return input_dBFS, output_dBFS
 
 
 """

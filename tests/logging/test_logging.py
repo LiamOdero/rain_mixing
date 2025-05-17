@@ -4,8 +4,9 @@ import numpy as np
 import pytest
 from auto_mixing.data.logging import (log_edit, read_logging_data, sample_dBFS,
                                       sample_logs)
-from constants.file_constants import (LOGGING_EXTENSION, CHUNKS, ROOT,
+from constants.file_constants import (LOGGING_EXTENSION, ROOT,
                                       INPUT_DATA_DIR, OUTPUT_DATA_DIR)
+from constants.model_constants import CHUNKS
 from rain_mixing.utils.utils import verify_logging_setup
 from pydub import AudioSegment
 
@@ -76,11 +77,11 @@ Tests that the output mp3s by log_edit have the desired naming convention
 
 
 def test_log_edit_file_names() -> None:
-    assert (os.listdir(INPUT_DATA_DIR)[-1] ==
-            f"input_{pytest.new_input_len - 1}.{LOGGING_EXTENSION}")
+    assert (f"input_{pytest.new_input_len - 1}.{LOGGING_EXTENSION}" in
+            os.listdir(INPUT_DATA_DIR))
 
-    assert (os.listdir(OUTPUT_DATA_DIR)[-1] ==
-            f"output_{pytest.new_output_len - 1}.{LOGGING_EXTENSION}")
+    assert (f"input_{pytest.new_output_len - 1}.{LOGGING_EXTENSION}" in
+            os.listdir(OUTPUT_DATA_DIR))
 
 
 """

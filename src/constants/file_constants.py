@@ -8,5 +8,4 @@ SONG_DIR = os.path.join(ROOT, "tracks")
 EXPORT_DIR = os.path.join(ROOT, "output")
 IMAGE_DIR = os.path.join(ROOT, "cover")
 
-CHUNKS = 100
 LOGGING_EXTENSION = "wav"
