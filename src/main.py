@@ -17,7 +17,7 @@ SILENCE_DUR = 2500
 FADE_OUT = 5000
 FADE_IN = 3000
 RAIN_EXTRA = 1500
-TARGET_DBFS = -27
+TARGET_DBFS = -30
 
 tracks = []
 track_names = []
