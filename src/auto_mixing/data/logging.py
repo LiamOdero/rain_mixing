@@ -39,6 +39,9 @@ Returns a list of <CHUNKS> dBFS samples from <track>
 
 :param
     -   track: The track to extrack dBFS samples from
+:return
+    -   chunk_dBFS: A list of chunked dBFS data from <track>
+        length = CHUNKS
 """
 
 

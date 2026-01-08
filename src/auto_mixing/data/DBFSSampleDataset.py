@@ -44,7 +44,7 @@ class DBFSSampleDataset(MixingDataset):
         return len(self.input_samples)
 
     """
-    Retrieves an input-output pair from the dataloader
+    Retrieves a specified input-output pair from the dataloader
     """
 
     def __getitem__(self, idx) -> tuple[Tensor, Tensor]:

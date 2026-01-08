@@ -1,3 +1,5 @@
+from typing import Any
+
 import torch.nn as nn
 from pydub import AudioSegment
 
@@ -19,5 +21,5 @@ class MixingNN(nn.Module):
         pass
 
     @staticmethod
-    def get_accuracy(pred, y):
+    def get_accuracy(pred: Any, y: Any):
         pass
