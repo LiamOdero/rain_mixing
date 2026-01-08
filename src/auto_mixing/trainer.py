@@ -112,6 +112,7 @@ Plots the total training and validation loss for each step
     -   valid_losses: a list of validation losses corresponding to <epochs>
 """
 
+
 def plot_training(epochs: list[int],
                   train_losses: list[float],
                   valid_losses: list[float]) -> None:
@@ -141,6 +142,7 @@ Plots the total training and validation accuracy for each step
     -   train_losses: a list of training accuracies corresponding to <epochs>
     -   valid_losses: a list of validation accuracies corresponding to <epochs>
 """
+
 
 def plot_acc(epochs, train_acc, valid_acc):
     plt.figure(figsize=(10, 6))

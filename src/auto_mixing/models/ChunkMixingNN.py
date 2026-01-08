@@ -44,7 +44,7 @@ class ChunkMixingNN(MixingNN):
     :param
         -   x: The current set of samples to train on
              shape = [batch_size, CHUNKS]
-    :return 
+    :return
         - A tensor containing a float representing a decibel adjustment to make
     """
 
@@ -61,7 +61,7 @@ class ChunkMixingNN(MixingNN):
         return self.output_fc(h_5)
 
     """
-    Takes in a track and passes it through the model to determine what decibel 
+    Takes in a track and passes it through the model to determine what decibel
     adjustment to apply to the entire track
 
     :param
@@ -87,14 +87,14 @@ class ChunkMixingNN(MixingNN):
 
     """
     Determines accuracy of a prediction using a ground truth label
-    
+
     Prediction considered accurate if within 1 decibel of the label
 
     :param
         -   pred: a list of predictions by the model
         -   y: a list of corresponding ground truths to each prediction
     :return
-        -   accs: accuracy in the range [0, 1], contained in a singleton 
+        -   accs: accuracy in the range [0, 1], contained in a singleton
             tensor
     """
 
