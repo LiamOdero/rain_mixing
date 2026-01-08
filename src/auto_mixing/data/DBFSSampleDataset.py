@@ -7,6 +7,7 @@ from torch import Tensor
 from torch.utils.data import Dataset
 from tqdm import tqdm
 
+from auto_mixing.data.MixingDataset import MixingDataset
 from auto_mixing.data.logging import sample_dBFS
 from constants.model_constants import AUGMENT_VARIATIONS
 
@@ -21,9 +22,11 @@ Dataset class wrapper for use with dBFS sample-based models
 """
 
 
-class DBFSSampleDataset(Dataset):
-    def __init__(self, input_tracks, output_tracks) -> None:
+class DBFSSampleDataset(MixingDataset):
+    def __init__(self, input_tracks: list[AudioSegment],
+                 output_tracks: list[AudioSegment]) -> None:
         # Taking dBFS samples from chunks for the input
+        super().__init__(input_tracks, output_tracks)
         input_samples = np.array([sample_dBFS(input_track) for input_track in
                                   input_tracks])
 
