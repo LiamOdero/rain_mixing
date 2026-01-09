@@ -16,7 +16,8 @@ from logged data
     - valid_data: Dataloader for validation samples
     - test_data: Dataloader for testing samples
 :raise
-    - FileNotFoundError: When no logs are found
+    - FileNotFoundError: When any mismatch between input and output logs are
+    found
 """
 
 
@@ -25,7 +26,8 @@ def create_sample_dataloaders(data_class: Type[MixingDataset]) \
     input_tracks, output_tracks = read_logging_data()
 
     # Initializing the dataloaders to use in the training loop
-    if input_tracks and output_tracks:
+    if (input_tracks and output_tracks and
+            len(input_tracks) == len(output_tracks)):
         dataset = data_class(input_tracks, output_tracks)
 
         generator = torch.Generator()

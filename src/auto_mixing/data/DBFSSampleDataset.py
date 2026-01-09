@@ -57,6 +57,8 @@ class DBFSSampleDataset(MixingDataset):
     <self.output_samples> with flat increases or decreases to volume according
     to the samples listed in <indices>
 
+    PRECONDITION: indices are valid
+
     :param
         - indices: Indicates which samples to augment
     """
