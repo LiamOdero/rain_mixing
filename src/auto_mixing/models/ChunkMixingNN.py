@@ -12,7 +12,7 @@ Class for models which used chunked dBFS data in order to mix tracks
 
 
 class ChunkMixingNN(MixingNN):
-    def __init__(self, output_dim: int):
+    def __init__(self):
         super().__init__()
 
         num_filters = 4
@@ -36,7 +36,7 @@ class ChunkMixingNN(MixingNN):
         )
 
         self.dropout = nn.Dropout(p=0.7)
-        self.output_fc = nn.Linear(16, output_dim)
+        self.output_fc = nn.Linear(16, 1)
 
     """
     Forward pass for this model type

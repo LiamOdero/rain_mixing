@@ -36,7 +36,7 @@ Tests the initialization of a ChunkMixingNN
 
 
 def test_init_chunkNN() -> None:
-    ChunkMixingNN(1)
+    ChunkMixingNN()
     assert True
 
 
@@ -46,7 +46,7 @@ Tests the forward pass of a ChunkMixingNN
 
 
 def test_forward_chunkNN() -> None:
-    model = ChunkMixingNN(1)
+    model = ChunkMixingNN()
     model.eval()
 
     for x, y in pytest.dataloader:
@@ -61,7 +61,7 @@ Tests the mixing of a ChunkNN
 
 
 def test_mix_chunkNN() -> None:
-    model = ChunkMixingNN(1)
+    model = ChunkMixingNN()
     model.eval()
     new_track = model.mix_track(pytest.test_audio)
     assert new_track.dBFS != pytest.test_audio.dBFS
@@ -73,24 +73,24 @@ Tests for calculating accuracy under ChunkMixingNN
 
 
 def test_accuracy_match_chunkNN() -> None:
-    model = ChunkMixingNN(1)
+    model = ChunkMixingNN()
     acc = model.get_accuracy(Tensor([1]), Tensor([1]))
     assert acc.item() == 1
 
 
 def test_accuracy_fail_chunkNN() -> None:
-    model = ChunkMixingNN(1)
+    model = ChunkMixingNN()
     acc = model.get_accuracy(Tensor([0]), Tensor([1]))
     assert acc.item() == 0
 
 
 def test_accuracy_tolerance_chunkNN() -> None:
-    model = ChunkMixingNN(1)
+    model = ChunkMixingNN()
     acc = model.get_accuracy(Tensor([1 - (1 / RANGE_REDUCTION)]), Tensor([1]))
     assert acc.item() == 1
 
 
 def test_accuracy_multiple_chunkNN() -> None:
-    model = ChunkMixingNN(1)
+    model = ChunkMixingNN()
     acc = model.get_accuracy(Tensor([0, 1]), Tensor([1, 1]))
     assert acc.item() == 0.5

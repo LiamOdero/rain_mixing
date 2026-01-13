@@ -3,9 +3,11 @@ import os
 import numpy as np
 import pytest
 from auto_mixing.data.logging import (log_edit, read_logging_data, sample_dBFS,
-                                      sample_logs)
+                                      sample_logs, save_model, load_model)
+from auto_mixing.models.ChunkMixingNN import ChunkMixingNN
 from constants.file_constants import (LOGGING_EXTENSION, ROOT,
-                                      INPUT_DATA_DIR, OUTPUT_DATA_DIR)
+                                      INPUT_DATA_DIR, OUTPUT_DATA_DIR,
+                                      MODEL_DIR)
 from constants.model_constants import CHUNKS
 from rain_mixing.utils.utils import verify_logging_setup
 from pydub import AudioSegment
@@ -141,3 +143,21 @@ def test_sample_logs_different() -> None:
                                               pytest.output_array)
 
     assert not np.array_equal(input_chunks, output_chunks)
+
+
+"""
+Tests that a model can be saved and loaded
+"""
+
+
+def test_load_model() -> None:
+    model = ChunkMixingNN()
+    save_model(model)
+
+    new_model = ChunkMixingNN()
+    load_model(new_model, 0)
+
+    new_model_file = os.listdir(MODEL_DIR)[-1]
+    os.remove(os.path.join(MODEL_DIR, new_model_file))
+
+    assert True

@@ -7,11 +7,14 @@ from torch.utils.data import DataLoader
 
 from auto_mixing.data.DBFSSampleDataset import DBFSSampleDataset
 from auto_mixing.data.dataloader import create_sample_dataloaders
+from auto_mixing.data.logging import save_model
 from auto_mixing.models.ChunkMixingNN import ChunkMixingNN
 from auto_mixing.models.MixingNN import MixingNN
 from constants.model_constants import (BATCH_SIZE, LR, RANGE_REDUCTION,
                                        EPOCHS, WEIGHT_DECAY)
 import matplotlib.pyplot as plt
+
+from rain_mixing.utils.utils import verify_setup
 
 """
 Passes inputs through the model for a single training loop step
@@ -185,7 +188,7 @@ def train_model() -> MixingNN:
     test_dataloader = data.DataLoader(test_data, shuffle=True,
                                       batch_size=BATCH_SIZE)
 
-    model = ChunkMixingNN(1)
+    model = ChunkMixingNN()
 
     # initialize training params
     optimizer = optim.Adam(model.parameters(), lr=LR,
@@ -237,5 +240,12 @@ def train_model() -> MixingNN:
 
 
 if __name__ == "__main__":
-    train_model()
-    pass
+    verify_setup()
+    model = train_model()
+
+    choice = ""
+    while choice != "y" and choice != "n":
+        print("Save Model? Y or N")
+        choice = input().lower()
+    if choice == "y":
+        save_model(model)

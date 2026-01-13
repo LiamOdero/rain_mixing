@@ -1,6 +1,7 @@
 import os
 from constants.file_constants import (SONG_DIR, EXPORT_DIR, IMAGE_DIR,
-                                      INPUT_DATA_DIR, OUTPUT_DATA_DIR)
+                                      INPUT_DATA_DIR, OUTPUT_DATA_DIR,
+                                      MODEL_DIR)
 
 """
 Confirms that the directory <dir> exists, and if it does not,
@@ -49,6 +50,7 @@ def verify_setup() -> None:
     verify_dir(SONG_DIR)
     verify_dir(EXPORT_DIR)
     verify_dir(IMAGE_DIR)
+    verify_dir(MODEL_DIR)
 
 
 """

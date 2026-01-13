@@ -5,9 +5,11 @@ from pydub import AudioSegment
 from pydub.utils import make_chunks
 import numpy as np
 from tqdm import tqdm
+from torch import save, load
+from auto_mixing.models.MixingNN import MixingNN
 from rain_mixing.utils.utils import wrapped_is_file
 from constants.file_constants import (INPUT_DATA_DIR, OUTPUT_DATA_DIR,
-                                      LOGGING_EXTENSION)
+                                      LOGGING_EXTENSION, MODEL_DIR)
 from constants.model_constants import CHUNKS
 from constants.audio_constants import S_TO_MS
 
@@ -32,6 +34,38 @@ def log_edit(input_track: AudioSegment, output_track: AudioSegment) -> None:
     output_filename = os.path.join(OUTPUT_DATA_DIR,
                                    f"output_{curr_length}.{LOGGING_EXTENSION}")
     output_track.export(output_filename)
+
+
+"""
+Saves <model>'s state dict to< MODEL_DIR>
+
+:param
+    -   model: The MixingNN chosen to save
+"""
+
+
+def save_model(model: MixingNN) -> None:
+    curr_length = len([name for name in os.listdir(MODEL_DIR) if
+                       wrapped_is_file(MODEL_DIR, name)])
+    model_filename = os.path.join(MODEL_DIR,
+                                  f"model_{curr_length}.pth")
+    save(model.state_dict(), model_filename)
+
+
+"""
+Loads the model saved with <model_num> to the input <model>
+PRECONDITION: <model_num> is compatible with the input model
+
+:param
+    -   model: The MixingNN to load data into
+    -   model_num: The file no. associated with the requested model
+"""
+
+
+def load_model(model: MixingNN, model_num: int) -> None:
+    model_filename = os.path.join(MODEL_DIR,
+                                  f"model_{model_num}.pth")
+    model.load_state_dict(load(model_filename))
 
 
 """

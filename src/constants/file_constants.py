@@ -8,4 +8,6 @@ SONG_DIR = os.path.join(ROOT, "tracks")
 EXPORT_DIR = os.path.join(ROOT, "output")
 IMAGE_DIR = os.path.join(ROOT, "cover")
 
+MODEL_DIR = os.path.join(ROOT, "models")
+
 LOGGING_EXTENSION = "wav"
