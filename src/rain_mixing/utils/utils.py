@@ -61,3 +61,4 @@ Verifies that all required directories for logging exist
 def verify_logging_setup() -> None:
     verify_dir(INPUT_DATA_DIR)
     verify_dir(OUTPUT_DATA_DIR)
+    verify_dir(MODEL_DIR)
