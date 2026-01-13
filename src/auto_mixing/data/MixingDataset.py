@@ -12,5 +12,5 @@ class MixingDataset(Dataset):
                  _output_tracks: list[AudioSegment]) -> None:
         super().__init__()
 
-    def augment_data(self, indices: list[int]) -> None:
+    def augment_data(self, indices: list[int]) -> None:  # pragma: no cover
         pass

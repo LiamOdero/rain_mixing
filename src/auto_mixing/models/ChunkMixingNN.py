@@ -48,7 +48,7 @@ class ChunkMixingNN(MixingNN):
         - A tensor containing a float representing a decibel adjustment to make
     """
 
-    def forward(self, x) -> Tensor:
+    def forward(self, x: Tensor) -> Tensor:
         # passing input through layers sequentially
         h_1 = torch.unsqueeze(x, 1)
 
@@ -73,12 +73,13 @@ class ChunkMixingNN(MixingNN):
     def mix_track(self, track: AudioSegment) -> AudioSegment:
         # sampling the dBFS so since that is what the model is trained on
         dBFS_samples = sample_dBFS(track)
-        dBFS_samples = torch.tensor(dBFS_samples)
+        dBFS_samples = torch.tensor(dBFS_samples).float()
+        dBFS_samples = dBFS_samples.unsqueeze(0)
 
         # getting the dB adjustment to apply
         # multiply by RANGE_REDUCTION since model outputs is in reduced space
         target_dBFS = self.forward(dBFS_samples) * RANGE_REDUCTION
-        target_diff = target_dBFS - dBFS_samples
+        target_diff = (target_dBFS - track.dBFS).mean().item()
 
         new_track = copy.copy(track)
         new_track += target_diff

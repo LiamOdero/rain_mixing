@@ -55,7 +55,6 @@ def test_init_dataloader_dBFS() -> None:
     assert len(train_data) == 7 + 7 * AUGMENT_VARIATIONS * AUGMENT_TYPES
 
 
-
 """
 Tests that dataloader raises FileNotFoundError on empty logging
 """
