@@ -9,15 +9,17 @@ from numpy import argmin, argmax
 import copy
 import os
 
-from rain_mixing.data.logging import log_edit
-from rain_mixing.utils.utils import SONG_DIR, EXPORT_DIR, IMAGE_DIR
+from auto_mixing.data.logging import log_edit, load_model
+from auto_mixing.models.ChunkMixingNN import ChunkMixingNN
+from constants.file_constants import SONG_DIR, EXPORT_DIR, IMAGE_DIR
 from rain_mixing.utils.utils import verify_setup, verify_logging_setup
 
 SILENCE_DUR = 2500
 FADE_OUT = 5000
 FADE_IN = 3000
 RAIN_EXTRA = 1500
-TARGET_DBFS = -27
+
+CHOSEN_MODEL = 0
 
 tracks = []
 track_names = []
@@ -36,6 +38,7 @@ file names to <track_name>
 
 
 def get_tracks() -> None:
+    total_length = 0
     for filename in tqdm(os.listdir(SONG_DIR)):
         f = os.path.join(SONG_DIR, filename)
 
@@ -47,6 +50,10 @@ def get_tracks() -> None:
 
         tracks.append(audio)
         track_names.append(track_name)
+
+        total_length += audio.duration_seconds
+
+    print(f"Approximate Length: {total_length // 60} minutes")
 
 
 """
@@ -120,8 +127,12 @@ if __name__ == '__main__':
     # Tracks where in track_line the current segment begins
     segment_start = 0
 
+    model = ChunkMixingNN()
+    load_model(model, CHOSEN_MODEL)
+
     for i in range(len(ordered_tracks)):
-        curr_track = ordered_tracks[i]
+        curr_track = model.mix_track(ordered_tracks[i])
+
         curr_name = ordered_track_names[i]
         curr_finished = False
         curr_len = curr_track.duration_seconds
@@ -144,11 +155,6 @@ if __name__ == '__main__':
 
         lowest = max(argmin(levels) * 1000 - FADE_IN, 0)
         highest = max(argmax(levels) * 1000 - FADE_IN, 0)
-
-        # TODO: remove once auto mixing is completed
-        # Current automatic adjustment towards ideal track audio level
-        target_diff = TARGET_DBFS - curr_track.dBFS
-        curr_track = curr_track + target_diff
 
         # combined_tracks is only used to be played to the user
         combined_tracks = curr_rain.overlay(curr_track)
