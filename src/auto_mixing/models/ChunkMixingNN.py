@@ -6,6 +6,9 @@ from auto_mixing.models.MixingNN import MixingNN
 from constants.model_constants import RANGE_REDUCTION
 from ..data.logging import sample_dBFS
 
+CLIPPING_LOWER = -35
+CLIPPING_UPPER = -25
+
 """
 Class for models which used chunked dBFS data in order to mix tracks
 """
@@ -76,10 +79,19 @@ class ChunkMixingNN(MixingNN):
         dBFS_samples = torch.tensor(dBFS_samples).float()
         dBFS_samples = dBFS_samples.unsqueeze(0)
 
+        device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        dBFS_samples = dBFS_samples.to(device)
+
         # getting the dB adjustment to apply
         # multiply by RANGE_REDUCTION since model outputs is in reduced space
-        target_dBFS = self.forward(dBFS_samples) * RANGE_REDUCTION
-        target_diff = (target_dBFS - track.dBFS).mean().item()
+        target_dBFS = self.forward(dBFS_samples) * -RANGE_REDUCTION
+        target_dBFS = target_dBFS.to("cpu").item()
+
+        # ensure track does not become to quiet or too loud
+        target_dBFS = max(target_dBFS, CLIPPING_LOWER)
+        target_dBFS = min(target_dBFS, CLIPPING_UPPER)
+
+        target_diff = target_dBFS - track.dBFS
 
         new_track = copy.copy(track)
         new_track += target_diff

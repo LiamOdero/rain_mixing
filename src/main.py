@@ -129,7 +129,6 @@ if __name__ == '__main__':
 
     model = ChunkMixingNN()
     load_model(model, CHOSEN_MODEL)
-    model.eval()
 
     for i in range(len(ordered_tracks)):
         curr_track = model.mix_track(ordered_tracks[i])

@@ -4,6 +4,7 @@ from numpy import ndarray, dtype, float64
 from pydub import AudioSegment
 from pydub.utils import make_chunks
 import numpy as np
+import torch
 from tqdm import tqdm
 from torch import save, load
 from auto_mixing.models.MixingNN import MixingNN
@@ -65,7 +66,13 @@ PRECONDITION: <model_num> is compatible with the input model
 def load_model(model: MixingNN, model_num: int) -> None:
     model_filename = os.path.join(MODEL_DIR,
                                   f"model_{model_num}.pth")
-    model.load_state_dict(load(model_filename))
+
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    model.load_state_dict(load(model_filename,
+                               map_location=torch.device(device),
+                               weights_only=True))
+    model.to(device)
+    model.eval()
 
 
 """
