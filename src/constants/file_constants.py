@@ -11,3 +11,4 @@ IMAGE_DIR = os.path.join(ROOT, "cover")
 MODEL_DIR = os.path.join(ROOT, "models")
 
 LOGGING_EXTENSION = "wav"
+EXTENSION_LIST = ["wav", "mp3"]
