@@ -10,7 +10,7 @@ from rain_mixing.frontend.PlaylistSelector import PlaylistSelector
 class Screen(CTkFrame):
 
     def __init__(self, window: Tk):
-        super().__init__(window)
+        super().__init__(window, fg_color="#141414")
 
         self.playlist_selector = PlaylistSelector(self)
 
