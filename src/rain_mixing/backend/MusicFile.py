@@ -17,5 +17,5 @@ class MusicFile:
 
     def __init__(self, directory: string):
         self.path = directory
-        self.name = os.path.basename(directory)[:-3]
+        self.name = os.path.basename(directory)[:-4]
         # TODO: create audiosegment
