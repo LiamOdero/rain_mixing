@@ -113,7 +113,7 @@ def test_search_negative() -> None:
 
 
 """
-Tests that searching with a match on a directory name returns the whole 
+Tests that searching with a match on a directory name returns the whole
 directory
 """
 
@@ -246,9 +246,11 @@ def test_add_files() -> None:
     assert new_dir.num_files == 2
     assert new_dir.files[1] == test_file_2
 
+
 """
-Tests adding a directory to a directory 
+Tests adding a directory to a directory
 """
+
 
 def test_add_dir() -> None:
     new_sub_dir = pytest.file_dir

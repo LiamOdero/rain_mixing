@@ -6,7 +6,7 @@ from ctkcomponents import CTkTreeview, CTkPopupMenu
 from customtkinter import CTkFrame, CTkButton, filedialog, CTkEntry, \
     CTkScrollbar
 
-from constants.file_constants import EXTENSION_LIST, EXTENSION_DIALOGUES
+from constants.file_constants import EXTENSION_DIALOGUES
 from rain_mixing.backend.Directory import Directory
 from rain_mixing.backend.MusicFile import MusicFile
 
@@ -195,7 +195,7 @@ class FileMenu(CTkFrame):
     """
     Searches the root directory for any matches of a keyword and updates
     the display accordingly
-    
+
     :param
         -   event: Contains information on where the event took place
     """
@@ -237,7 +237,7 @@ class FileMenu(CTkFrame):
 
     """
     Handles right click events on the table
-    
+
     :param
         -   event: Contains information on where the event took place
     """
@@ -269,7 +269,7 @@ class FileMenu(CTkFrame):
 
     """
     Determines if hover effects should be applied or removed from a table row
-    
+
     :param
         -   event: Contains information on where the event took place
     """

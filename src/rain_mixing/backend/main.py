@@ -114,7 +114,8 @@ if __name__ == '__main__':
     if len(ordered_tracks) == 0:
         raise Exception("Error: Please insert tracks into ./tracks")
 
-    rain_fx = AudioSegment.from_file(file="../../assets/rain_sfx.mp3", format="mp3")
+    rain_fx = AudioSegment.from_file(file="../../assets/rain_sfx.mp3",
+                                     format="mp3")
 
     # rain_line will store consecutive rain sfx tracks
     rain_line = copy.copy(rain_fx)

@@ -23,4 +23,3 @@ class Window(CTk):
 
         self.screen = Screen(self)
         self.screen.grid(row=0, column=0, sticky="nsew")
-

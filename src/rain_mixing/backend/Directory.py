@@ -12,7 +12,6 @@ Defines a directory that can hold other directories or music files
 
 
 class Directory:
-
     """
     Initializes a directory using a provided file path, and saves the data
     of all associated music files within the directory or any subdirectory
@@ -35,9 +34,9 @@ class Directory:
             self.path = "root"
 
     """
-    Empties self.files and self.sub_directories and scans self.path for files 
+    Empties self.files and self.sub_directories and scans self.path for files
     and directories
-    
+
     Empties existing files in case updates were made to the directory
     """
 
@@ -60,18 +59,17 @@ class Directory:
                 new_file = MusicFile(path)
                 self.files.append(new_file)
 
-
     """
     Searches itself and all subdirectories / files for any whose name
     matches the search term (with fuzzy matches), and returns a new directory
     representing those that satisfy the search term
-    
+
     Results cached for efficiency since this involves recursion
-    
+
     :param
         -   term: The search term to match files / directories to
     :return
-        -   new_dir: A directory of all matches within this directory. If no 
+        -   new_dir: A directory of all matches within this directory. If no
         matches are found, return None
     """
 
@@ -114,11 +112,11 @@ class Directory:
 
     """
     Returns the treeview representation of this directory
-    
+
     :return
-        - self rep: A list of the following format: 
+        - self rep: A list of the following format:
             - Contains a dict with "name" and "children"
-            - All subdirectories and files of this folder are contained in 
+            - All subdirectories and files of this folder are contained in
             children
             - Subdirectories are represented under this format
     """
@@ -141,7 +139,7 @@ class Directory:
 
     """
     Returns the name of this directory
-    
+
     :return
         - The name of the folder used to initialize this directory
     """
@@ -150,7 +148,7 @@ class Directory:
         return os.path.basename(self.path)
 
     """
-    Returns a list of every music file stored within this directory and 
+    Returns a list of every music file stored within this directory and
     and subdirectories
 
     :return

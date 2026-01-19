@@ -1,8 +1,5 @@
-import glob
 import os
 import string
-
-from constants.file_constants import EXTENSION_LIST
 
 """
 Defines a music file stored by the user and some associated metadata
