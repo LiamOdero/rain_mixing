@@ -33,21 +33,11 @@ class FileMenu(CTkFrame):
         self.add_folder = CTkButton(self, text="Add folder:",
                                     command=self.add_folder)
 
-        # init button widgets
-        self.add_file = CTkButton(self, text="Add file:",
-                                  command=self.add_file)
-
         self.add_folder.grid(row=0,
                              column=1,
                              sticky="ew",
-                             padx=(10, 5),
+                             padx=(5, 5),
                              pady=(20, 20))
-
-        self.add_file.grid(row=0,
-                           column=2,
-                           sticky="ew",
-                           padx=(5, 10),
-                           pady=(20, 20))
 
         self.grid_columnconfigure(0, weight=18)
         self.grid_columnconfigure(1, weight=1)
@@ -125,17 +115,7 @@ class FileMenu(CTkFrame):
         if path:
             new_dir = Directory(path)
 
-            selection = self.table.treeview.selection()
-            selected_item = None
-            if selection:
-                selected_item = self.table_mapping[selection[0]]
-
-            if isinstance(selected_item, MusicFile):
-                selection = ""
-            elif isinstance(selected_item, Directory):
-                selected_item.add_folder(new_dir)
-
-            threading.Thread(target=self.load_files, args=[new_dir, selection],
+            threading.Thread(target=self.load_files, args=[new_dir],
                              daemon=True).start()
 
     """
@@ -147,7 +127,7 @@ class FileMenu(CTkFrame):
         - files: A list of all files to be loaded in by this function
     """
 
-    def load_files(self, new_dir: Directory, selection: string) -> None:
+    def load_files(self, new_dir: Directory) -> None:
         # TODO: see if i can place it anywhere else
         progress = CTkProgressPopup(self, title="Loading Files...",
                                     side="left_top", label="", message="")
@@ -168,37 +148,7 @@ class FileMenu(CTkFrame):
             self.root.num_files += new_dir.num_files + 1
         new_rep = new_dir.get_dict()
 
-        self.insert_items(new_rep, [new_dir], selection)
-
-    """
-    Adds a user selected music file to the currently selected folder,
-    or root if none is selected
-    """
-
-    def add_file(self) -> None:
-        paths = filedialog.askopenfiles(title="Select Files",
-                                        filetypes=EXTENSION_DIALOGUES)
-
-        if paths:
-            selection = self.table.treeview.selection()
-            selected_item = None
-
-            if selection:
-                selected_item = self.table_mapping[selection[0]]
-
-            if isinstance(selected_item, MusicFile):
-                selection = ""
-
-            new_files = []
-            for path in paths:
-                new_file = MusicFile(path.name)
-                new_files.append(new_file)
-
-                if selection:
-                    selected_item.add_file(new_file)
-
-            self.insert_items([file.name for file in new_files], new_files,
-                              selection)
+        self.insert_items(new_rep, [new_dir])
 
     """
     Uses cxtkcomponents implementation of inserting items but stores the ids
