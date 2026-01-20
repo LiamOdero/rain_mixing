@@ -1,8 +1,9 @@
 import string
+import threading
 from tkinter import Event
 from tkinter.ttk import Style
 from typing import Union
-from ctkcomponents import CTkTreeview, CTkPopupMenu
+from ctkcomponents import CTkTreeview, CTkPopupMenu, CTkProgressPopup
 from customtkinter import CTkFrame, CTkButton, filedialog, CTkEntry, \
     CTkScrollbar
 
@@ -134,12 +135,45 @@ class FileMenu(CTkFrame):
             elif isinstance(selected_item, Directory):
                 selected_item.add_folder(new_dir)
 
-            if new_dir.num_files > 0:
-                self.root.sub_directories.append(new_dir)
-                self.root.num_files += new_dir.num_files + 1
-            new_rep = new_dir.get_dict()
+            threading.Thread(target=self.load_files, args=[new_dir, selection],
+                             daemon=True).start()
 
-            self.insert_items(new_rep, [new_dir], selection)
+    """
+    Sequentially loads in the <files> from where they are stored
+    
+    Only intended to be run in a background thread
+    
+    :param
+        - files: A list of all files to be loaded in by this function
+    """
+
+    def load_files(self, new_dir: Directory, selection: string) -> None:
+        # TODO: see if i can place it anywhere else
+        progress = CTkProgressPopup(self, title="Loading Files...",
+                                    side="left_top", label="", message="")
+
+        files = new_dir.get_files()
+
+        for i in range(len(files)):
+            file = files[i]
+            file.load_audio()
+            total_progress = i / len(files)
+            progress.update_progress(total_progress)
+
+        progress.update_progress(1.0)
+        self.after(0, progress.cancel_task)
+
+        if new_dir.num_files > 0:
+            self.root.sub_directories.append(new_dir)
+            self.root.num_files += new_dir.num_files + 1
+        new_rep = new_dir.get_dict()
+
+        self.insert_items(new_rep, [new_dir], selection)
+
+    """
+    Adds a user selected music file to the currently selected folder,
+    or root if none is selected
+    """
 
     def add_file(self) -> None:
         paths = filedialog.askopenfiles(title="Select Files",

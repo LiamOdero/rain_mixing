@@ -34,10 +34,7 @@ class Directory:
             self.path = "root"
 
     """
-    Empties self.files and self.sub_directories and scans self.path for files
-    and directories
-
-    Empties existing files in case updates were made to the directory
+    Scans self.path for files and directories to add to this directory
     """
 
     def scan_dir(self) -> None:
