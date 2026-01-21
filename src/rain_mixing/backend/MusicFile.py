@@ -16,10 +16,12 @@ class MusicFile:
     :param
         -   directory: The full path where the actual music file this class
         represents is held
+        -   id: A unique identifier for this music file
     """
 
-    def __init__(self, directory: string) -> None:
+    def __init__(self, directory: string, id: int) -> None:
         self.audio = None
+        self.id = id
         self.path = directory
         self.name = os.path.basename(directory)[:-4]
 

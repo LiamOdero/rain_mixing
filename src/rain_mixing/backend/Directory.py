@@ -19,12 +19,14 @@ class Directory:
     :param
         - directory: The directory in user storage that this instance will
         represent
+        - max_id: The maximum id held by any music file in this folder + 1
     """
 
-    def __init__(self, directory: string = "") -> None:
+    def __init__(self, directory: string = "", max_id: int = 0) -> None:
 
         self.files: list[MusicFile] = []
         self.num_files = 0
+        self.max_id = max_id
         self.sub_directories: list[Directory] = []
 
         if directory:
@@ -44,16 +46,18 @@ class Directory:
 
             if os.path.isdir(path):
                 # Recursively constructs the subdirectories
-                new_dir = Directory(path)
+                new_dir = Directory(path, self.max_id)
 
                 # Ignore directories without any music files within them
                 if new_dir.num_files > 0:
+                    self.max_id = new_dir.max_id
                     self.num_files += new_dir.num_files + 1
                     self.sub_directories.append(new_dir)
 
             elif os.path.isfile(path) and path[-3:] in EXTENSION_LIST:
                 self.num_files += 1
-                new_file = MusicFile(path)
+                new_file = MusicFile(path, self.max_id)
+                self.max_id += 1
                 self.files.append(new_file)
 
     """
@@ -162,23 +166,16 @@ class Directory:
         return all_files
 
     """
-    Adds an existing music file to this directory's files
-
-    :param
-        - file: The already initialized file to add
-    """
-
-    def add_file(self, file: MusicFile) -> None:
-        self.files.append(file)
-        self.num_files += 1
-
-    """
     Adds an existing folder to this directory's sub-directories
 
     :param
         - directory: The already initialized directory to add
     """
 
-    def add_folder(self, directory: "Directory") -> None:
-        self.sub_directories.append(directory)
-        self.num_files += directory.num_files + 1
+    def add_folder(self, path: string) -> "Directory":
+        new_dir = Directory(path, self.max_id)
+        self.sub_directories.append(new_dir)
+        self.num_files += new_dir.num_files + 1
+        self.max_id = new_dir.max_id
+
+        return new_dir

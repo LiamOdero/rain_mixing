@@ -113,7 +113,7 @@ class FileMenu(CTkFrame):
 
         # only proceed if the user has added a directory
         if path:
-            new_dir = Directory(path)
+            new_dir = self.root.add_folder(path)
 
             threading.Thread(target=self.load_files, args=[new_dir],
                              daemon=True).start()

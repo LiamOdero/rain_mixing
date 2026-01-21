@@ -226,38 +226,27 @@ def test_get_files_sub() -> None:
 
 
 """
-Tests adding files to a directory
-"""
-
-
-def test_add_files() -> None:
-    test_file_1 = pytest.file_dir.files[0]
-    test_file_2 = pytest.file_dir.files[1]
-
-    new_dir = Directory()
-
-    new_dir.add_file(test_file_1)
-
-    assert new_dir.num_files == 1
-    assert new_dir.files[0] == test_file_1
-
-    new_dir.add_file(test_file_2)
-
-    assert new_dir.num_files == 2
-    assert new_dir.files[1] == test_file_2
-
-
-"""
 Tests adding a directory to a directory
 """
 
 
 def test_add_dir() -> None:
-    new_sub_dir = pytest.file_dir
     new_dir = Directory()
 
-    new_dir.add_folder(new_sub_dir)
+    file_dir = os.path.join(TEST_DIR, "file_dir")
+    new_dir.add_folder(file_dir)
     assert new_dir.num_files == 3
     assert len(new_dir.files) == 0
     assert len(new_dir.sub_directories) == 1
-    assert new_dir.sub_directories[0] == new_sub_dir
+
+
+"""
+Tests that max_id applies properly
+"""
+
+def test_max_id() -> None:
+    assert pytest.sub_dir.max_id == 2
+    assert pytest.sub_dir.sub_directories[0].max_id == 1
+
+    assert pytest.sub_dir.sub_directories[0].files[0].id == 0
+    assert pytest.sub_dir.files[0].id == 1
