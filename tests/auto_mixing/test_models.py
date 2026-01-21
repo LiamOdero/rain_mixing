@@ -1,6 +1,7 @@
 import os
 
 import pytest
+import torch
 from pydub import AudioSegment
 
 from auto_mixing.data.DBFSSampleDataset import DBFSSampleDataset
@@ -62,6 +63,10 @@ Tests the mixing of a ChunkNN
 
 def test_mix_chunkNN() -> None:
     model = ChunkMixingNN()
+
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    model.to(device)
+
     model.eval()
     new_track = model.mix_track(pytest.test_audio)
     assert new_track.dBFS != pytest.test_audio.dBFS
