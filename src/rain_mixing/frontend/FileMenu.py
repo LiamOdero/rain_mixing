@@ -128,23 +128,23 @@ class FileMenu(CTkFrame):
     """
 
     def load_files(self, new_dir: Directory) -> None:
-        files = new_dir.get_files()
-        file_total = len(files)
-        # TODO: see if i can place it anywhere else
-        progress = CTkProgressPopup(self, title="Loading Files...",
-                                    side="left_top",
-                                    label="",
-                                    message=f"0 / {file_total}")
-
-        for i in range(file_total):
-            file = files[i]
-            file.load_audio()
-            total_progress = i / len(files)
-            progress.update_progress(total_progress)
-            progress.update_message(f"{i + 1} / {file_total}")
-
-        progress.update_progress(1.0)
-        self.after(0, progress.cancel_task)
+        # files = new_dir.get_files()
+        # file_total = len(files)
+        # # TODO: see if i can place it anywhere else
+        # progress = CTkProgressPopup(self, title="Loading Files...",
+        #                             side="left_top",
+        #                             label="",
+        #                             message=f"0 / {file_total}")
+        #
+        # for i in range(file_total):
+        #     file = files[i]
+        #     file.load_audio()
+        #     total_progress = i / len(files)
+        #     progress.update_progress(total_progress)
+        #     progress.update_message(f"{i + 1} / {file_total}")
+        #
+        # progress.update_progress(1.0)
+        # self.after(0, progress.cancel_task)
 
         new_rep = new_dir.get_dict()
 
