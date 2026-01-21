@@ -8,7 +8,6 @@ from auto_mixing.data.DBFSSampleDataset import DBFSSampleDataset
 from auto_mixing.models.ChunkMixingNN import ChunkMixingNN
 from constants.file_constants import ROOT
 from constants.model_constants import RANGE_REDUCTION
-from rain_mixing.utils.utils import verify_logging_setup
 from torch import Tensor
 
 
@@ -21,9 +20,6 @@ def pytest_namespace():
 
 @pytest.fixture(scope="session", autouse=True)
 def setup_tests() -> None:
-    # Setting up logs
-    verify_logging_setup()
-
     test_file_path = os.path.join(ROOT, "src", "assets", "rain_sfx.mp3")
     pytest.test_audio = AudioSegment.from_file(
         file=test_file_path, format="mp3")

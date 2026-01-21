@@ -40,12 +40,13 @@ class DirectoryLogger:
     def load_dirs(self) -> Directory:
         new_root = Directory()
 
-        with open(self.data_file, "r") as data_file:
-            for line in data_file:
-                try:
-                    line = line[:-1]
-                    new_root.add_folder(line)
-                except FileNotFoundError:
-                    pass
+        if os.path.isfile(self.data_file):
+            with open(self.data_file, "r") as data_file:
+                for line in data_file:
+                    try:
+                        line = line[:-1]
+                        new_root.add_folder(line)
+                    except FileNotFoundError:
+                        pass
 
         return new_root

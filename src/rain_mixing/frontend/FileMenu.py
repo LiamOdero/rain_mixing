@@ -3,7 +3,7 @@ import threading
 from tkinter import Event
 from tkinter.ttk import Style
 from typing import Union
-from ctkcomponents import CTkTreeview, CTkPopupMenu, CTkProgressPopup
+from ctkcomponents import CTkTreeview, CTkPopupMenu
 from customtkinter import CTkFrame, CTkButton, filedialog, CTkEntry, \
     CTkScrollbar
 from rain_mixing.backend.Directory import Directory

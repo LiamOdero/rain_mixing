@@ -1,8 +1,10 @@
+import string
 from typing import Any, Type
 import torch
 import torch.utils.data as data
 from auto_mixing.data.MixingDataset import MixingDataset
 from auto_mixing.data.logging import read_logging_data
+from constants.file_constants import INPUT_DATA_DIR, OUTPUT_DATA_DIR
 from constants.model_constants import TRAIN_RATIO, VALID_RATIO, TEST_RATIO
 
 """
@@ -21,9 +23,11 @@ from logged data
 """
 
 
-def create_sample_dataloaders(data_class: Type[MixingDataset]) \
+def create_sample_dataloaders(data_class: Type[MixingDataset],
+                              input_dir: string = INPUT_DATA_DIR,
+                              output_dir: string = OUTPUT_DATA_DIR) \
         -> tuple[Any, Any, Any]:
-    input_tracks, output_tracks = read_logging_data()
+    input_tracks, output_tracks = read_logging_data(input_dir, output_dir)
 
     # Initializing the dataloaders to use in the training loop
     if (input_tracks and output_tracks and

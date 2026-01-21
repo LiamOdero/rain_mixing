@@ -1,4 +1,5 @@
 import os
+import string
 from typing import Any
 from numpy import ndarray, dtype, float64
 from pydub import AudioSegment
@@ -21,18 +22,24 @@ logging folder
 :param
     -   input_track: An unmodified track that the user has edited
     -   output_track: The edited version of <input_track>
+    -   input_dir: The directory to write input data to
+    -   output_dir: The directory to write output data to
 """
 
 
-def log_edit(input_track: AudioSegment, output_track: AudioSegment) -> None:
-    curr_length = len([name for name in os.listdir(INPUT_DATA_DIR) if
-                       wrapped_is_file(INPUT_DATA_DIR, name)])
+def log_edit(input_track: AudioSegment,
+             output_track: AudioSegment,
+             input_dir: string = INPUT_DATA_DIR,
+             output_dir: string = OUTPUT_DATA_DIR) -> None:
 
-    input_filename = os.path.join(INPUT_DATA_DIR,
+    curr_length = len([name for name in os.listdir(input_dir) if
+                       wrapped_is_file(input_dir, name)])
+
+    input_filename = os.path.join(input_dir,
                                   f"input_{curr_length}.{LOGGING_EXTENSION}")
     input_track.export(input_filename)
 
-    output_filename = os.path.join(OUTPUT_DATA_DIR,
+    output_filename = os.path.join(output_dir,
                                    f"output_{curr_length}.{LOGGING_EXTENSION}")
     output_track.export(output_filename)
 
@@ -150,21 +157,24 @@ output tracks
 """
 
 
-def read_logging_data() -> tuple[list[AudioSegment], list[AudioSegment]]:
+def read_logging_data(input_dir: string = INPUT_DATA_DIR,
+                      output_dir: string = OUTPUT_DATA_DIR) \
+        -> tuple[list[AudioSegment], list[AudioSegment]]:
+
     input_data = []
     print("importing input data...")
-    for name in tqdm(os.listdir(INPUT_DATA_DIR)):
-        if wrapped_is_file(INPUT_DATA_DIR, name):
-            abs_file = os.path.join(INPUT_DATA_DIR, name)
+    for name in tqdm(os.listdir(input_dir)):
+        if wrapped_is_file(input_dir, name):
+            abs_file = os.path.join(input_dir, name)
             track = AudioSegment.from_file(file=abs_file,
                                            extension=f"{LOGGING_EXTENSION}")
             input_data.append(track)
 
     output_data = []
     print("importing output data...")
-    for name in tqdm(os.listdir(OUTPUT_DATA_DIR)):
-        if wrapped_is_file(OUTPUT_DATA_DIR, name):
-            abs_file = os.path.join(OUTPUT_DATA_DIR, name)
+    for name in tqdm(os.listdir(output_dir)):
+        if wrapped_is_file(output_dir, name):
+            abs_file = os.path.join(output_dir, name)
             track = AudioSegment.from_file(file=abs_file,
                                            extension=f"{LOGGING_EXTENSION}")
             output_data.append(track)
