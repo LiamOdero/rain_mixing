@@ -9,7 +9,7 @@ from constants.file_constants import (LOGGING_EXTENSION, ROOT,
                                       MODEL_DIR)
 from constants.model_constants import CHUNKS
 from pydub import AudioSegment
-from rain_mixing.tests.utils import verify_testing_setup, TEST_INPUT_DIR, \
+from tests.utils import verify_testing_setup, TEST_INPUT_DIR, \
     TEST_OUTPUT_DIR
 
 

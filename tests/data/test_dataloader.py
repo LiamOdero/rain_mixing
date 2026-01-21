@@ -7,7 +7,7 @@ from auto_mixing.data.dataloader import create_sample_dataloaders
 from auto_mixing.data.logging import log_edit
 from constants.file_constants import ROOT
 from constants.model_constants import AUGMENT_VARIATIONS
-from rain_mixing.tests.utils import verify_testing_setup, TEST_OUTPUT_DIR, \
+from tests.utils import verify_testing_setup, TEST_OUTPUT_DIR, \
     TEST_INPUT_DIR
 from auto_mixing.data.DBFSSampleDataset import DBFSSampleDataset, AUGMENT_TYPES
 
