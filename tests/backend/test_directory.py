@@ -244,6 +244,7 @@ def test_add_dir() -> None:
 Tests that max_id applies properly
 """
 
+
 def test_max_id() -> None:
     assert pytest.sub_dir.max_id == 2
     assert pytest.sub_dir.sub_directories[0].max_id == 1

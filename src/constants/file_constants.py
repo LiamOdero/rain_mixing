@@ -13,3 +13,5 @@ MODEL_DIR = os.path.join(ROOT, "models")
 LOGGING_EXTENSION = "wav"
 EXTENSION_DIALOGUES = [('Music files', '*.wav'), ('Music files', '*.mp3')]
 EXTENSION_LIST = ["wav", "mp3"]
+
+USER_DIR = os.path.join(ROOT, "user_data")

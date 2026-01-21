@@ -1,6 +1,7 @@
 from tkinter import Tk
 from customtkinter import CTkFrame
 
+from rain_mixing.backend.Directory import Directory
 from rain_mixing.frontend.FileMenu import FileMenu
 from rain_mixing.frontend.PlayMenu import PlayMenu
 from rain_mixing.frontend.PlaylistMenu import PlaylistMenu
@@ -9,12 +10,12 @@ from rain_mixing.frontend.PlaylistSelector import PlaylistSelector
 
 class Screen(CTkFrame):
 
-    def __init__(self, window: Tk):
+    def __init__(self, window: Tk, root: Directory):
         super().__init__(window, fg_color="#141414")
 
         self.playlist_selector = PlaylistSelector(self)
 
-        self.file_menu = FileMenu(self)
+        self.file_menu = FileMenu(self, root)
 
         self.playlist_menu = PlaylistMenu(self)
 

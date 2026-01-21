@@ -6,19 +6,16 @@ from typing import Union
 from ctkcomponents import CTkTreeview, CTkPopupMenu, CTkProgressPopup
 from customtkinter import CTkFrame, CTkButton, filedialog, CTkEntry, \
     CTkScrollbar
-
-from constants.file_constants import EXTENSION_DIALOGUES
 from rain_mixing.backend.Directory import Directory
 from rain_mixing.backend.MusicFile import MusicFile
 
 
 class FileMenu(CTkFrame):
 
-    def __init__(self, parent: CTkFrame):
+    def __init__(self, parent: CTkFrame, root: Directory):
         super().__init__(parent, fg_color="#1c1c1c")
 
-        # TODO: check if some data has already been saved
-        self.root = Directory()
+        self.root = root
 
         # init search widgets
         self.search_field = CTkEntry(self, placeholder_text="Search...")
@@ -104,6 +101,9 @@ class FileMenu(CTkFrame):
         self.table.treeview.bind("<Button-4>", self.scroll_event)
         self.table.treeview.bind("<Button-5>", self.scroll_event)
 
+        for sub_dir in self.root.sub_directories:
+            self.load_files(sub_dir)
+
     """
     Adds a user selected folder to a specified folder
     """
@@ -120,32 +120,32 @@ class FileMenu(CTkFrame):
 
     """
     Sequentially loads in the <files> from where they are stored
-    
+
     Only intended to be run in a background thread
-    
+
     :param
         - files: A list of all files to be loaded in by this function
     """
 
     def load_files(self, new_dir: Directory) -> None:
+        files = new_dir.get_files()
+        file_total = len(files)
         # TODO: see if i can place it anywhere else
         progress = CTkProgressPopup(self, title="Loading Files...",
-                                    side="left_top", label="", message="")
+                                    side="left_top",
+                                    label="",
+                                    message=f"0 / {file_total}")
 
-        files = new_dir.get_files()
-
-        for i in range(len(files)):
+        for i in range(file_total):
             file = files[i]
             file.load_audio()
             total_progress = i / len(files)
             progress.update_progress(total_progress)
+            progress.update_message(f"{i + 1} / {file_total}")
 
         progress.update_progress(1.0)
         self.after(0, progress.cancel_task)
 
-        if new_dir.num_files > 0:
-            self.root.sub_directories.append(new_dir)
-            self.root.num_files += new_dir.num_files + 1
         new_rep = new_dir.get_dict()
 
         self.insert_items(new_rep, [new_dir])
