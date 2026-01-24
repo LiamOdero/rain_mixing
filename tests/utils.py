@@ -4,6 +4,8 @@ from rain_mixing.utils.utils import verify_dir
 
 TEST_INPUT_DIR = os.path.join(ROOT, "tests", "logging", "input_data")
 TEST_OUTPUT_DIR = os.path.join(ROOT, "tests", "logging", "output_data")
+TEST_DIR = os.path.join(ROOT, "tests", "assets")
+TEST_DIRECTORY_DIR = os.path.join(ROOT, "tests", "logging", "directories")
 
 """
 Verifies that all required directories for testing exist

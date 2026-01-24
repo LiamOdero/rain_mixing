@@ -2,10 +2,8 @@ import os
 
 import pytest
 
-from constants.file_constants import ROOT
 from rain_mixing.backend.Directory import Directory
-
-TEST_DIR = os.path.join(ROOT, "tests", "assets")
+from tests.utils import TEST_DIR
 
 
 def pytest_namespace():
