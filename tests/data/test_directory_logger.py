@@ -4,7 +4,7 @@ import pytest
 
 from rain_mixing.backend.Directory import Directory
 from rain_mixing.data.DirectoryLogger import DirectoryLogger
-from rain_mixing.tests.utils import TEST_DIRECTORY_DIR, TEST_DIR
+from tests.utils import TEST_DIRECTORY_DIR, TEST_DIR
 
 
 def pytest_namespace():
