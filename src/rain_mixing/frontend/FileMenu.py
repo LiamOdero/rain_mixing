@@ -8,12 +8,14 @@ from customtkinter import CTkFrame, CTkButton, filedialog, CTkEntry, \
     CTkScrollbar
 from rain_mixing.backend.Directory import Directory
 from rain_mixing.backend.MusicFile import MusicFile
+from rain_mixing.frontend.StateObserver import StateObserver
 
 
-class FileMenu(CTkFrame):
+class FileMenu(StateObserver):
 
     def __init__(self, parent: CTkFrame, root: Directory):
-        super().__init__(parent, fg_color="#1c1c1c")
+        super().__init__(parent)
+        self.configure(fg_color="#1c1c1c")
 
         self.root = root
 
