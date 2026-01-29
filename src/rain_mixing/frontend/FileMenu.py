@@ -3,11 +3,12 @@ import threading
 from tkinter import Event
 from tkinter.ttk import Style
 from typing import Union
-from ctkcomponents import CTkTreeview, CTkPopupMenu
+from ctkcomponents import CTkTreeview
 from customtkinter import CTkFrame, CTkButton, filedialog, CTkEntry, \
     CTkScrollbar
 from rain_mixing.backend.Directory import Directory
 from rain_mixing.backend.MusicFile import MusicFile
+from rain_mixing.frontend.SelectionPopupMenu import SelectionPopupMenu
 from rain_mixing.frontend.StateObserver import StateObserver
 
 
@@ -88,15 +89,8 @@ class FileMenu(StateObserver):
         self.table.treeview.bind("<Leave>", self.on_mouse_leave)
 
         # init right-click popup widgets
-        self.popup = CTkPopupMenu(self,
-                                  width=150,
-                                  height=300,
-                                  title="",
-                                  fg_color="#222222",
-                                  border_color="#3f3f3f",
-                                  border_width=2,
-                                  corner_radius=12)
-        self.table.treeview.bind("<Button-3>", self.popup_event)
+        self.popup = SelectionPopupMenu(self)
+
         self.table.treeview.bind("<Button-3>", self.popup_event)
 
         self.table.treeview.bind("<MouseWheel>", self.scroll_event)
@@ -224,6 +218,9 @@ class FileMenu(StateObserver):
     """
     Handles right click events on the table
 
+    If a row was selected, initiate a popup menu. Otherwise, remove existing
+    selections
+
     :param
         -   event: Contains information on where the event took place
     """
@@ -237,17 +234,8 @@ class FileMenu(StateObserver):
 
             selected = self.table_mapping[clicked_row]
 
-            # Configures the popup to display information for the selected
-            # item
             if selected:
-                name = ""
-                if isinstance(selected, MusicFile):
-                    name = selected.name
-                elif isinstance(selected, Directory):
-                    name = selected.get_name()
-
-                self.popup.title.configure(text=name)
-                self.popup.popup(event.x_root, event.y_root)
+                self.popup.trigger_popup(selected, event)
             else:
                 # Close popup if no row clicked
                 self.table.treeview.selection_remove(
@@ -262,19 +250,19 @@ class FileMenu(StateObserver):
 
     def on_mouse_move(self, event: Event):
         item_id = self.table.treeview.identify_row(event.y)
+
+        # Remove hover effect from old row
         if item_id != self.last_hovered:
-            # Remove the hover effect from the previous row
-            if self.last_hovered:
-                self.table.treeview.item(self.last_hovered, tags=())
+            self.table.treeview.item(self.last_hovered, tags=())
 
-            # Apply the hover effect to the new row
-            if item_id:
-                self.table.treeview.item(item_id, tags=("hover_effect",))
-                self.table.treeview.configure(cursor="hand2")
-            else:
-                self.table.treeview.configure(cursor="")
+        # Apply the hover effect to the new row
+        if item_id:
+            self.table.treeview.item(item_id, tags=("hover_effect",))
+            self.table.treeview.configure(cursor="hand2")
+        else:
+            self.table.treeview.configure(cursor="")
 
-            self.last_hovered = item_id
+        self.last_hovered = item_id
 
     """
     Removes hover effects when leaving the treeview
