@@ -16,7 +16,7 @@ class PlayMenu(StateObserver):
                                     sticky="nsew",
                                     padx=(10, 30),
                                     pady=(15, 5))
-        self.grid_columnconfigure(0, weight=1)
+        self.grid_columnconfigure(0, weight=1, uniform="group1")
 
         self.control_frame = ControlFrame(self)
         self.control_frame.grid(row=0, column=1,
@@ -30,16 +30,15 @@ class PlayMenu(StateObserver):
                                sticky="nsew",
                                padx=(30, 10),
                                pady=(15, 5))
-        self.grid_columnconfigure(2, weight=1)
+        self.grid_columnconfigure(2, weight=1, uniform="group1")
 
 
 class InformationFrame(CTkFrame):
 
     def __init__(self, parent: CTkFrame) -> None:
-        super().__init__(parent)
+        super().__init__(parent, fg_color="#1c1c1c")
         self.configure(corner_radius=0,
-                       height=90,
-                       fg_color="#1c1c1c")
+                       height=90)
 
         self.grid_columnconfigure(0, weight=1)
 
@@ -94,11 +93,12 @@ class ControlFrame(CTkFrame):
         self.elapsed_label = CTkLabel(self, text="0:00")
         self.elapsed_label.grid(row=1, column=0, padx=10)
 
-        self.play_slider = CTkSlider(self)
+        self.play_slider = CTkSlider(self, state="disabled")
         self.play_slider.grid(row=1, column=1,
                               sticky="ew")
+        self.play_slider.set(0)
 
-        self.total_label = CTkLabel(self, text="3:45")
+        self.total_label = CTkLabel(self, text="- - : - -")
         self.total_label.grid(row=1, column=2, padx=10)
 
 
