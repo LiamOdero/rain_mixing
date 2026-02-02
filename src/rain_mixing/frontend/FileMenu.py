@@ -8,13 +8,17 @@ from customtkinter import CTkFrame, CTkButton, filedialog, CTkEntry, \
     CTkScrollbar
 from rain_mixing.backend.Directory import Directory
 from rain_mixing.backend.MusicFile import MusicFile
+from rain_mixing.backend.MusicPlayer import MusicPlayer
 from rain_mixing.frontend.SelectionPopupMenu import SelectionPopupMenu
 from rain_mixing.frontend.StateObserver import StateObserver
 
 
 class FileMenu(StateObserver):
 
-    def __init__(self, parent: CTkFrame, root: Directory):
+    def __init__(self, parent: CTkFrame,
+                 root: Directory,
+                 music_player: MusicPlayer):
+
         super().__init__(parent)
         self.configure(fg_color="#1c1c1c")
 
@@ -89,7 +93,7 @@ class FileMenu(StateObserver):
         self.table.treeview.bind("<Leave>", self.on_mouse_leave)
 
         # init right-click popup widgets
-        self.popup = SelectionPopupMenu(self)
+        self.popup = SelectionPopupMenu(self, music_player)
 
         self.table.treeview.bind("<Button-3>", self.popup_event)
 

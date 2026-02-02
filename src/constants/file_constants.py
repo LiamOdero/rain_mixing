@@ -10,6 +10,9 @@ IMAGE_DIR = os.path.join(ROOT, "cover")
 
 MODEL_DIR = os.path.join(ROOT, "models")
 
+ASSET_DIR = os.path.join(ROOT, "src", "assets")
+GUI_ASSET_DIR = os.path.join(ASSET_DIR, "gui")
+
 LOGGING_EXTENSION = "wav"
 EXTENSION_DIALOGUES = [('Music files', '*.wav'), ('Music files', '*.mp3')]
 EXTENSION_LIST = ["wav", "mp3"]

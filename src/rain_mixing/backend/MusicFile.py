@@ -30,3 +30,6 @@ class MusicFile:
             self.audio = AudioSegment.from_file(self.path, self.path[-3:])
         except FileNotFoundError:
             pass
+
+    def get_name(self) -> string:
+        return self.name
