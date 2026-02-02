@@ -20,7 +20,8 @@ class Screen(CTkFrame):
 
         self.playlist_menu = PlaylistMenu(self)
 
-        self.play_menu = PlayMenu(self)
+        self.play_menu = PlayMenu(self, music_player)
+        music_player.notifier.add_state_observer(self.play_menu)
 
         self.grid_columnconfigure(0, weight=1)
         self.grid_columnconfigure(1, weight=19)

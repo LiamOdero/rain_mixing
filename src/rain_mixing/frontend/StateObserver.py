@@ -1,4 +1,5 @@
 from customtkinter import CTkFrame
+from rain_mixing.backend.MusicState import MusicState
 
 """
 Defines an interface for parts of the GUI that react to changes in the
@@ -10,5 +11,5 @@ class StateObserver(CTkFrame):
     def __init__(self, parent: CTkFrame):
         super().__init__(parent)
 
-    def update(self) -> None:
+    def update_state(self, state: MusicState) -> None:
         pass
