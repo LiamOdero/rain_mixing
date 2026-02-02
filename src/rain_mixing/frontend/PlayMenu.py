@@ -32,7 +32,7 @@ class PlayMenu(StateObserver):
                                 pady=(15, 5)),
         self.grid_columnconfigure(1, weight=5)
 
-        self.volume_frame = VolumeFrame(self)
+        self.volume_frame = VolumeFrame(self, music_player)
         self.volume_frame.grid(row=0, column=2,
                                sticky="nsew",
                                padx=(30, 10),
@@ -188,19 +188,32 @@ class ControlFrame(CTkFrame):
 
 class VolumeFrame(CTkFrame):
 
-    def __init__(self, parent: CTkFrame) -> None:
+    def __init__(self, parent: CTkFrame, music_player: MusicPlayer) -> None:
         super().__init__(parent, fg_color="#1c1c1c")
+        self.music_player = music_player
         self.configure(corner_radius=0,
                        height=90)
         self.grid_propagate(False)
 
-        self.mute_button = CTkButton(self, text="mute", width=60)
+        self.mute_button = CTkButton(self, text="mute", width=60,
+                                     command=self.toggle_mute)
+
         self.mute_button.grid(column=0, row=0, padx=5)
 
-        self.vol_slider = CTkSlider(self)
+        self.vol_slider = CTkSlider(self, command=self.update_volume)
         self.vol_slider.grid(column=1, row=0, sticky="we", padx=5)
 
         self.grid_rowconfigure(0, weight=1)
 
         self.grid_columnconfigure(0, weight=1)
         self.grid_columnconfigure(1, weight=4)
+
+    def update_volume(self, value: float) -> None:
+        self.music_player.set_volume(value)
+
+    def toggle_mute(self) -> None:
+        if self.music_player.muted:
+            self.mute_button.configure(text="mute")
+        else:
+            self.mute_button.configure(text="unmute")
+        self.music_player.toggle_mute()
