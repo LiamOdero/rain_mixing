@@ -1,6 +1,10 @@
-from customtkinter import CTkFrame, CTkLabel, CTkButton, CTkSlider
+import io
+import os
 
-from rain_mixing.backend.MusicFile import MusicFile
+from PIL import Image
+from customtkinter import CTkFrame, CTkLabel, CTkButton, CTkSlider, CTkImage
+
+from constants.file_constants import GUI_ASSET_DIR
 from rain_mixing.backend.MusicPlayer import MusicPlayer
 from rain_mixing.backend.MusicState import MusicState
 from rain_mixing.frontend.StateObserver import StateObserver
@@ -46,30 +50,68 @@ class PlayMenu(StateObserver):
         self.information_frame.update_state(state)
         self.control_frame.update_state(state)
 
+
 class InformationFrame(CTkFrame):
 
     def __init__(self, parent: CTkFrame) -> None:
         super().__init__(parent, fg_color="#1c1c1c")
         self.configure(corner_radius=0,
                        height=90)
+        self.grid_propagate(False)
 
-        self.grid_columnconfigure(0, weight=1)
+        self.grid_columnconfigure(0, minsize=1)
+        self.grid_columnconfigure(1, weight=1)
 
         self.grid_rowconfigure(0, weight=1)
         self.grid_rowconfigure(1, weight=1)
 
+        placeholder_path = os.path.join(GUI_ASSET_DIR, "cover_placeholder.png")
+        placeholder_cover = Image.open(placeholder_path)
+
+        self.placeholder_image = CTkImage(light_image=placeholder_cover,
+                                          dark_image=placeholder_cover,
+                                          size=(90, 90))
+
+        self.image_label = CTkLabel(self, text="")
+        self.image_label.grid(column=0, row=0, rowspan=2,
+                              sticky="nsew", padx=(15, 10))
+
+        self.image_label.configure(image=self.placeholder_image)
+        self.image_label.image = self.placeholder_image
+
         self.title_label = CTkLabel(self, text="Select A Track...",
                                     anchor="center", justify="center",
                                     font=("Segoe UI", 16))
-        self.title_label.grid(column=0, row=0, sticky="nsew")
+        self.title_label.grid(column=1, row=0, sticky="sew")
 
         self.author_label = CTkLabel(self, text="...",
                                      anchor="center", justify="center",
                                      font=("Segoe UI", 12))
-        self.author_label.grid(column=0, row=1, sticky="nsew")
+        self.author_label.grid(column=1, row=1, sticky="nsew", padx=(15, 10))
 
     def update_state(self, state: MusicState) -> None:
         self.title_label.configure(text=state.title)
+
+        ctk_img = None
+        if state.metadata:
+            self.author_label.configure(text=state.metadata.artist)
+
+            for i in state.metadata.images:
+                raw_data = io.BytesIO(i.image_data)
+                pil_img = Image.open(raw_data)
+
+                ctk_img = CTkImage(light_image=pil_img,
+                                   dark_image=pil_img,
+                                   size=(90, 90))
+
+        else:
+            self.author_label.configure(text="Unknown Artist")
+
+        if ctk_img is None:
+            ctk_img = self.placeholder_image
+
+        self.image_label.configure(image=ctk_img)
+        self.image_label.image = ctk_img
 
 
 class ControlFrame(CTkFrame):

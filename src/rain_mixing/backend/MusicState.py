@@ -10,3 +10,4 @@ class MusicState:
         self.dur_s = file.audio.duration_seconds
         self.elapsed_dur_s = 0
         self.title = file.name
+        self.metadata = file.metadata

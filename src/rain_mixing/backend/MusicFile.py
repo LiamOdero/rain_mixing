@@ -1,6 +1,6 @@
 import os
 import string
-
+import eyed3.id3
 from pydub import AudioSegment
 
 """
@@ -23,6 +23,13 @@ class MusicFile:
         self.audio = None
         self.id = id
         self.path = directory
+
+        file_metadata = eyed3.load(self.path)
+        if file_metadata:
+            self.metadata = file_metadata.tag
+        else:
+            self.metadata = None
+
         self.name = os.path.basename(directory)[:-4]
 
     def load_audio(self) -> None:
