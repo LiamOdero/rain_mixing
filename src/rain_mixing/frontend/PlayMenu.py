@@ -1,5 +1,7 @@
 import io
+import math
 import os
+from tkinter import Event
 
 from PIL import Image
 from customtkinter import CTkFrame, CTkLabel, CTkButton, CTkSlider, CTkImage
@@ -118,10 +120,13 @@ class ControlFrame(CTkFrame):
     def __init__(self, parent: CTkFrame, music_player: MusicPlayer) -> None:
         super().__init__(parent, fg_color="#1c1c1c")
         self.playing = False
+        self.playing_prev = False
         self.music_player = music_player
 
         self.grid_columnconfigure(1, weight=1)
         self.grid_rowconfigure((0, 1), weight=1)
+
+        self.curr_total_time_s = 0
 
         # setting up buttons on row 0
         self.button_container = CTkFrame(self, fg_color="transparent")
@@ -151,13 +156,16 @@ class ControlFrame(CTkFrame):
 
         # labels and slider on row 2
 
-        self.elapsed_label = CTkLabel(self, text="0:00")
+        self.elapsed_label = CTkLabel(self, text="00:00")
         self.elapsed_label.grid(row=1, column=0, padx=10)
 
-        self.play_slider = CTkSlider(self, state="disabled")
+        self.play_slider = CTkSlider(self, state="disabled", from_=0, to=1)
         self.play_slider.grid(row=1, column=1,
                               sticky="ew")
         self.play_slider.set(0)
+        self.play_slider.bind('<ButtonPress-1>', self.slider_touch)
+        self.play_slider.bind('<B1-Motion>', self.update_elapsed_label)
+        self.play_slider.bind('<ButtonRelease-1>', self.slider_release)
 
         self.total_label = CTkLabel(self, text="- - : - -")
         self.total_label.grid(row=1, column=2, padx=10)
@@ -167,23 +175,77 @@ class ControlFrame(CTkFrame):
         self.prev_button.configure(state="normal")
         self.play_button.configure(state="normal")
         self.next_button.configure(state="normal")
+        self.play_slider.configure(state="normal")
 
         # configure playtime text
+        # save total time for use by elapsed time text
+        self.curr_total_time_s = state.dur_s
         total_minutes = int(state.dur_s // 60)
         final_seconds = int(state.dur_s - (total_minutes * 60))
+
         self.total_label.configure(text='{:02d}:{:02d}'
                                    .format(total_minutes, final_seconds))
 
-        self.playing = True
-        self.play_button.configure(text="pause")
+        self.play()
+
+    def update_slider(self) -> None:
+        if self.playing:
+            progress = self.music_player.get_progress()
+            self.play_slider.set(progress)
+            self.update_elapsed_label()
+            self.after(100, self.update_slider)
+
+            if math.isclose(progress, 1, abs_tol=0.0002):
+                # technically a pause would be achieved anyway, but this
+                # accounts for all the necessary frontend updates
+                self.pause()
+
+    def update_elapsed_label(self, _event: Event = None) -> None:
+        progress = self.play_slider.get()
+        elapsed_time = progress * self.curr_total_time_s
+        total_minutes = int(elapsed_time // 60)
+        final_seconds = int(elapsed_time - (total_minutes * 60))
+
+        self.elapsed_label.configure(text='{:02d}:{:02d}'
+                                     .format(total_minutes,
+                                             final_seconds))
+
+    def slider_touch(self, _event: Event = None) -> None:
+        self.playing_prev = self.playing
+        self.pause()
+
+    def slider_release(self, _event: Event = None) -> None:
+        slider_progress = self.play_slider.get()
+        total_frames = self.music_player.curr_frame_total.value
+
+        requested_frame = int(total_frames * slider_progress)
+        self.music_player.seek(requested_frame)
+
+        if self.playing_prev:
+            self.play()
 
     def toggle_pause(self) -> None:
         if self.playing:
-            self.play_button.configure(text="play")
+            self.pause()
+        else:
+            self.play()
+
+    def pause(self) -> None:
+        self.play_button.configure(text="play")
+        self.playing = False
+        self.music_player.pause()
+
+    def play(self) -> None:
+        progress = self.music_player.get_progress()
+
+        if math.isclose(progress, 1, abs_tol=0.0002):
+            self.play_slider.set(0)
+            self.slider_release()
         else:
             self.play_button.configure(text="pause")
-        self.playing = not self.playing
-        self.music_player.toggle_pause()
+            self.playing = True
+            self.music_player.play()
+            self.update_slider()
 
 
 class VolumeFrame(CTkFrame):
