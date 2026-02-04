@@ -121,6 +121,7 @@ class ControlFrame(CTkFrame):
         super().__init__(parent, fg_color="#1c1c1c")
         self.playing = False
         self.playing_prev = False
+        self.loop_flag = False
         self.music_player = music_player
 
         self.grid_columnconfigure(1, weight=1)
@@ -152,6 +153,8 @@ class ControlFrame(CTkFrame):
 
         self.loop_button = CTkButton(self.button_container, text="loop",
                                      width=60)
+        self.loop_button.configure(command=lambda:
+                                   self.toggle_loop())
         self.loop_button.grid(row=0, column=4, padx=2)
 
         # labels and slider on row 2
@@ -189,16 +192,22 @@ class ControlFrame(CTkFrame):
         self.play()
 
     def update_slider(self) -> None:
-        if self.playing:
-            progress = self.music_player.get_progress()
-            self.play_slider.set(progress)
-            self.update_elapsed_label()
-            self.after(100, self.update_slider)
+        if not self.playing:
+            return
 
-            if math.isclose(progress, 1, abs_tol=0.0002):
-                # technically a pause would be achieved anyway, but this
-                # accounts for all the necessary frontend updates
+        progress = self.music_player.get_progress()
+
+        self.play_slider.set(progress)
+        self.update_elapsed_label()
+
+        if progress >= 0.999:
+            if self.loop_flag:
+                self.music_player.seek(0)
+            else:
                 self.pause()
+                return
+
+        self.after(100, self.update_slider)
 
     def update_elapsed_label(self, _event: Event = None) -> None:
         progress = self.play_slider.get()
@@ -237,15 +246,21 @@ class ControlFrame(CTkFrame):
 
     def play(self) -> None:
         progress = self.music_player.get_progress()
+        if progress >= 0.999:
+            self.music_player.seek(0)
 
-        if math.isclose(progress, 1, abs_tol=0.0002):
-            self.play_slider.set(0)
-            self.slider_release()
+        self.play_button.configure(text="pause")
+        self.playing = True
+        self.music_player.play()
+
+        self.update_slider()
+
+    def toggle_loop(self) -> None:
+        if self.loop_flag:
+            self.loop_button.configure(text="loop")
         else:
-            self.play_button.configure(text="pause")
-            self.playing = True
-            self.music_player.play()
-            self.update_slider()
+            self.loop_button.configure(text="cancel")
+        self.loop_flag = not self.loop_flag
 
 
 class VolumeFrame(CTkFrame):

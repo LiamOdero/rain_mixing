@@ -8,17 +8,14 @@ from rain_mixing.backend.MusicNotifier import MusicNotifier
 
 def playback_worker(audio_bytes, sample_rate, channels, sample_width,
                     pause_event, stop_event, current_frame, frame_total,
-                    volume_val, loop_flag):
+                    volume_val):
     dtype = np.int16 if sample_width == 2 else np.int32
     audio_array = np.frombuffer(audio_bytes, dtype=dtype).reshape(-1, channels)
     frame_total.value = len(audio_array)
-    first_run = True
 
-    while first_run or loop_flag:
-        first_run = False
+    while not stop_event.is_set():
 
         def callback(outdata, frames, _time, _status):
-            nonlocal current_frame
             if stop_event.is_set():
                 raise sd.CallbackStop()
 
@@ -26,34 +23,40 @@ def playback_worker(audio_bytes, sample_rate, channels, sample_width,
                 outdata.fill(0)
                 return
 
-            chunk = audio_array[current_frame.value:
-                                current_frame.value + frames]
+            idx = current_frame.value
+            chunk = audio_array[idx: idx + frames]
+
+            if len(chunk) == 0:
+                outdata.fill(0)
+                raise sd.CallbackStop()  # Ends the stream, but not the process
 
             if len(chunk) < frames:
                 res = (chunk * volume_val.value).astype(dtype)
                 outdata[:len(chunk)] = res
-                outdata[len(chunk):] = 0
+                outdata[len(chunk):].fill(0)
+                current_frame.value += len(chunk)
                 raise sd.CallbackStop()
             else:
                 boosted_chunk = chunk.astype(np.float32) * volume_val.value
-
+                # Clipping
                 if dtype == np.int16:
-                    boosted_chunk = np.clip(boosted_chunk,
-                                            -32768, 32767)
+                    boosted_chunk = np.clip(boosted_chunk, -32768, 32767)
                 elif dtype == np.int32:
-                    boosted_chunk = np.clip(boosted_chunk,
-                                            -2147483648, 2147483647)
+                    boosted_chunk = np.clip(boosted_chunk, -2147483648,
+                                            2147483647)
 
                 outdata[:] = boosted_chunk.astype(dtype)
                 current_frame.value += frames
 
-        with sd.OutputStream(samplerate=sample_rate,
-                             channels=channels,
-                             callback=callback,
-                             dtype=dtype,
-                             blocksize=1024):
-            while not stop_event.is_set() and current_frame.value < len(
-                    audio_array):
+        if pause_event.is_set() or current_frame.value >= len(audio_array):
+            sd.sleep(100)
+            continue
+
+        # Inner block: Active Audio Stream
+        with sd.OutputStream(samplerate=sample_rate, channels=channels,
+                             callback=callback, dtype=dtype, blocksize=1024):
+            while not stop_event.is_set() and not pause_event.is_set() \
+                    and current_frame.value < len(audio_array):
                 sd.sleep(100)
 
 
@@ -73,7 +76,6 @@ class MusicPlayer:
         self.muted = False
         self.prev_volume = 0
 
-        self.loop_flag = Value('i', 0)
         self.curr_frame = Value('i', 0)
         self.curr_frame_total = Value('i', 0)
 
@@ -102,7 +104,6 @@ class MusicPlayer:
                 self.curr_frame,
                 self.curr_frame_total,
                 self.volume,
-                self.loop_flag
             )
         )
         self.music_process.start()
