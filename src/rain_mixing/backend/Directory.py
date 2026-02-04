@@ -8,20 +8,15 @@ from rain_mixing.backend.MusicFile import MusicFile
 
 """
 Defines a directory that can hold other directories or music files
+
+:attributes
+    - directory: The directory in user storage that this instance will
+    represent
+    - max_id: The maximum id held by any music file in this folder + 1
 """
 
 
 class Directory:
-    """
-    Initializes a directory using a provided file path, and saves the data
-    of all associated music files within the directory or any subdirectory
-
-    :param
-        - directory: The directory in user storage that this instance will
-        represent
-        - max_id: The maximum id held by any music file in this folder + 1
-    """
-
     def __init__(self, directory: string = "", max_id: int = 0) -> None:
 
         self.files: list[MusicFile] = []

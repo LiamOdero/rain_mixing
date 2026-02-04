@@ -1,5 +1,4 @@
 import io
-import math
 import os
 from tkinter import Event
 
@@ -43,7 +42,7 @@ class PlayMenu(StateObserver):
 
     """
     Notifies subcomponents of change in played music
-    
+
     :param
         -   file: The music file currently playing
     """
@@ -51,6 +50,11 @@ class PlayMenu(StateObserver):
     def update_state(self, state: MusicState) -> None:
         self.information_frame.update_state(state)
         self.control_frame.update_state(state)
+
+
+"""
+Frame on the left of the play menu displaying track information
+"""
 
 
 class InformationFrame(CTkFrame):
@@ -91,9 +95,18 @@ class InformationFrame(CTkFrame):
                                      font=("Segoe UI", 12))
         self.author_label.grid(column=1, row=1, sticky="nsew", padx=(15, 10))
 
+    """
+    Updates UI to present information on the selected track and plays it
+
+    :param
+        -   state: Data for the track to play
+    """
+
     def update_state(self, state: MusicState) -> None:
+        # change music title
         self.title_label.configure(text=state.title)
 
+        # show cover image
         ctk_img = None
         if state.metadata:
             self.author_label.configure(text=state.metadata.artist)
@@ -109,11 +122,17 @@ class InformationFrame(CTkFrame):
         else:
             self.author_label.configure(text="Unknown Artist")
 
+        # placeholder if file has no cover data
         if ctk_img is None:
             ctk_img = self.placeholder_image
 
         self.image_label.configure(image=ctk_img)
         self.image_label.image = ctk_img
+
+
+"""
+Frame on the left of the play menu allowing user to control playing state
+"""
 
 
 class ControlFrame(CTkFrame):
@@ -173,6 +192,10 @@ class ControlFrame(CTkFrame):
         self.total_label = CTkLabel(self, text="- - : - -")
         self.total_label.grid(row=1, column=2, padx=10)
 
+    """
+    Enables buttons and changes labels to represent track length
+    """
+
     def update_state(self, state: MusicState) -> None:
         # enable control buttons
         self.prev_button.configure(state="normal")
@@ -191,8 +214,13 @@ class ControlFrame(CTkFrame):
 
         self.play()
 
+    """
+    Adjusts slider value based on current track progress
+    """
+
     def update_slider(self) -> None:
         if not self.playing:
+            # stop recursion once track is paused
             return
 
         progress = self.music_player.get_progress()
@@ -207,7 +235,12 @@ class ControlFrame(CTkFrame):
                 self.pause()
                 return
 
+        # recursive call to update slider again
         self.after(100, self.update_slider)
+
+    """
+    Updates the time label to represent elapsed duration
+    """
 
     def update_elapsed_label(self, _event: Event = None) -> None:
         progress = self.play_slider.get()
@@ -219,9 +252,18 @@ class ControlFrame(CTkFrame):
                                      .format(total_minutes,
                                              final_seconds))
 
+    """
+    Pauses track when the play slider is first touched
+    """
+
     def slider_touch(self, _event: Event = None) -> None:
         self.playing_prev = self.playing
         self.pause()
+
+    """
+    Seeks requested frame and reverts to previous play state once slider is
+    released
+    """
 
     def slider_release(self, _event: Event = None) -> None:
         slider_progress = self.play_slider.get()
@@ -233,16 +275,28 @@ class ControlFrame(CTkFrame):
         if self.playing_prev:
             self.play()
 
+    """
+    Toggles both the player and the UI between playing and paused
+    """
+
     def toggle_pause(self) -> None:
         if self.playing:
             self.pause()
         else:
             self.play()
 
+    """
+    Pauses the player and updates play button
+    """
+
     def pause(self) -> None:
         self.play_button.configure(text="play")
         self.playing = False
         self.music_player.pause()
+
+    """
+    Resumes the player and updates the play button
+    """
 
     def play(self) -> None:
         progress = self.music_player.get_progress()
@@ -254,6 +308,10 @@ class ControlFrame(CTkFrame):
         self.music_player.play()
 
         self.update_slider()
+
+    """
+    Toggles between if the current track should loop or not
+    """
 
     def toggle_loop(self) -> None:
         if self.loop_flag:

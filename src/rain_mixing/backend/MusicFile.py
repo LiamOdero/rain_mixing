@@ -5,19 +5,15 @@ from pydub import AudioSegment
 
 """
 Defines a music file stored by the user and some associated metadata
+
+:attributes
+    -   directory: The full path where the actual music file this class
+    represents is held
+    -   id: A unique identifier for this music file
 """
 
 
 class MusicFile:
-    """
-    Initializes a directory using a provided file path, and saves the data
-    of all associated music files within the directory or any subdirectory
-
-    :param
-        -   directory: The full path where the actual music file this class
-        represents is held
-        -   id: A unique identifier for this music file
-    """
 
     def __init__(self, directory: string, id: int) -> None:
         self.audio = None

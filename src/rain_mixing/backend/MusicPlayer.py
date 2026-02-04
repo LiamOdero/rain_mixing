@@ -5,10 +5,31 @@ from multiprocessing import Process, Event, Value
 from rain_mixing.backend.MusicFile import MusicFile
 from rain_mixing.backend.MusicNotifier import MusicNotifier
 
+"""
+Worker function that manages playing a single music file to the player
+
+:param
+    -   audio_bytes: The raw bytes read from the audio file
+    -   sample_rate: Sample rate recorded in the original music file
+    -   channels: Number of channels recorded in the original music file
+    -   sample_width: Sample width recorded in the original music file
+    -   pause_event: A shared memory event determining if music should be
+    paused
+    -   stop_event: A shared memory event determining if this worker should
+    terminate
+    -   current_frame: A shared memory value of the frame currently
+    played by the worker
+    -   frame_total: A shared memory value of the total number of frames in
+    the current music
+    -   volume_val: A shared memory value of a value from 0-2.0 of modifiers to
+    the base volume
+"""
+
 
 def playback_worker(audio_bytes, sample_rate, channels, sample_width,
-                    pause_event, stop_event, current_frame, frame_total,
-                    volume_val):
+                    pause_event: Event, stop_event: Event,
+                    current_frame: Value, frame_total: Value,
+                    volume_val: Value):
     dtype = np.int16 if sample_width == 2 else np.int32
     audio_array = np.frombuffer(audio_bytes, dtype=dtype).reshape(-1, channels)
     frame_total.value = len(audio_array)
@@ -62,6 +83,21 @@ def playback_worker(audio_bytes, sample_rate, channels, sample_width,
 
 """
 Manages playing and controlling a MusicFile selected by the user
+
+:attributes
+    -   music_process: The current process managing the playing of music
+    -   pause_event: A shared memory event determining if music should be
+    paused
+    -   stop_event: A shared memory event determining if this worker should
+    terminate
+    -   volume: A shared memory value of a value from 0-2.0 of modifiers to
+    the base volume
+    -   prev_volume: Volume set prior to muting a track
+    -   curr_frame: A shared memory value of the frame currently
+    played by the worker
+    -   curr_frame_total: A shared memory value of the total number of frames
+    in the current music
+    -   notifier: A MusicNotifier used to make updates to the frontend
 """
 
 
@@ -80,6 +116,13 @@ class MusicPlayer:
         self.curr_frame_total = Value('i', 0)
 
         self.notifier = MusicNotifier()
+
+    """
+    Spawns a process to play a track selected by the user
+
+    :param
+        -   file: The file selected for playing
+    """
 
     def play_track(self, file: MusicFile) -> None:
         self.kill_threads()
@@ -110,17 +153,36 @@ class MusicPlayer:
         self.notifier.notify_observers(file)
 
     """
-    Toggle pause event used by music thread
+    Clears pause events and plays the current track
     """
 
     def play(self) -> None:
         self.pause_event.clear()
 
+    """
+    Sets the pause event and pauses the current track
+    """
+
     def pause(self) -> None:
         self.pause_event.set()
 
+    """
+    Sets the currently played frame to one selected by the user
+
+    :param
+        -   value: The frame selected to be played
+    """
+
     def seek(self, value: int) -> None:
         self.curr_frame.value = value
+
+    """
+    Returns a value from 0.0-1.0 representing percent completion of the current
+    track
+
+    :return
+        -   progress: The % completion of the current track
+    """
 
     def get_progress(self) -> float:
         curr_frame = self.curr_frame
@@ -131,6 +193,9 @@ class MusicPlayer:
 
     """
     Sets volume from 0.0 to 2.0 (2.0 is 200% volume)
+
+    :param
+        -   value: The volume modifier to apply
     """
 
     def set_volume(self, value: float) -> None:
@@ -138,10 +203,16 @@ class MusicPlayer:
             # Clamping between 0.0 and 2.0
             self.volume.value = max(0.0, min(2.0, value))
         else:
+            # Only change prev_volume so that track stays muted
             self.prev_volume = max(0.0, min(2.0, value))
+
+    """
+    Toggles whether or not the current track is muted
+    """
 
     def toggle_mute(self) -> None:
         if self.muted:
+            # set volume to the stored value of what the slider is currently on
             self.volume.value = self.prev_volume
         else:
             self.prev_volume = self.volume.value

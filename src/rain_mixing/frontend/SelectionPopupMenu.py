@@ -22,7 +22,7 @@ BTN_OPTION = {
 }
 
 """
-Defines a popup menu that appears when a user right clicks in an area 
+Defines a popup menu that appears when a user right clicks in an area
 where music files are shown
 """
 
@@ -45,7 +45,7 @@ class SelectionPopupMenu(CTkPopupMenu):
 
     """
     Configures the popup to display information for the selected item
-    
+
     :param
         -   selection: The directory or music file that the user has right
         clicked on

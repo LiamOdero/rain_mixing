@@ -1,6 +1,4 @@
 from customtkinter import CTk
-
-from rain_mixing.backend.MusicNotifier import MusicNotifier
 from rain_mixing.backend.MusicPlayer import MusicPlayer
 from rain_mixing.data.DirectoryLogger import DirectoryLogger
 from rain_mixing.frontend.Screen import Screen
@@ -34,10 +32,18 @@ class Window(CTk):
 
         self.protocol("WM_DELETE_WINDOW", self.on_close)
 
+    """
+    Determines closing procedures for the program
+    """
+
     def on_close(self) -> None:
+        # close the ui
         self.destroy()
+
+        # kill sub processes used for music
         self.music_player.kill_threads()
 
+        # log data
         print("Logging user data...")
         self.logger.log_dirs(self.root)
         print("Finished")
