@@ -1,5 +1,4 @@
 from rain_mixing.backend.MusicFile import MusicFile
-from rain_mixing.backend.MusicState import MusicState
 from rain_mixing.frontend.StateObserver import StateObserver
 
 """
@@ -36,7 +35,6 @@ class MusicNotifier:
         -   file: The music file relevant to the state update
     """
 
-    def notify_observers(self, file: MusicFile) -> None:
-        curr_state = MusicState(file)
+    def notify_observers(self, state: MusicFile) -> None:
         for observer in self.state_observers:
-            observer.update_state(curr_state)
+            observer.update_state(state)

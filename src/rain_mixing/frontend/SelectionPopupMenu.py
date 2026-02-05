@@ -60,7 +60,9 @@ class SelectionPopupMenu(CTkPopupMenu):
         self.title.configure(text=name)
 
         if isinstance(selection, Directory):
-            self.play_row.configure(command=lambda: print(name))
+            files = selection.get_files()
+            self.play_row.configure(command=lambda:
+                                    self.music_player.play_tracks(files))
         else:
             self.play_row.configure(
                 command=lambda: self.music_player.play_tracks([selection]))

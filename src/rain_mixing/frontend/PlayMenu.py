@@ -6,8 +6,8 @@ from PIL import Image
 from customtkinter import CTkFrame, CTkLabel, CTkButton, CTkSlider, CTkImage
 
 from constants.file_constants import GUI_ASSET_DIR
+from rain_mixing.backend.MusicFile import MusicFile
 from rain_mixing.backend.MusicPlayer import MusicPlayer
-from rain_mixing.backend.MusicState import MusicState
 from rain_mixing.frontend.StateObserver import StateObserver
 
 
@@ -47,7 +47,7 @@ class PlayMenu(StateObserver):
         -   file: The music file currently playing
     """
 
-    def update_state(self, state: MusicState) -> None:
+    def update_state(self, state: MusicFile) -> None:
         self.information_frame.update_state(state)
         self.control_frame.update_state(state)
 
@@ -102,7 +102,7 @@ class InformationFrame(CTkFrame):
         -   state: Data for the track to play
     """
 
-    def update_state(self, state: MusicState) -> None:
+    def update_state(self, state: MusicFile) -> None:
         # change music title
         self.title_label.configure(text=state.title)
 
@@ -196,7 +196,7 @@ class ControlFrame(CTkFrame):
     Enables buttons and changes labels to represent track length
     """
 
-    def update_state(self, state: MusicState) -> None:
+    def update_state(self, state: MusicFile) -> None:
         # enable control buttons
         self.prev_button.configure(state="normal")
         self.play_button.configure(state="normal")
@@ -227,12 +227,6 @@ class ControlFrame(CTkFrame):
 
         self.play_slider.set(progress)
         self.update_elapsed_label()
-
-        if progress >= 0.999:
-            if not self.loop_flag:
-                # todo: check if queue is empty or not
-                self.pause()
-                return
 
         # recursive call to update slider again
         self.after(100, self.update_slider)

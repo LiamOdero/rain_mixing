@@ -25,7 +25,6 @@ Defines a music file stored by the user and some associated metadata
 class MusicFile:
 
     def __init__(self, directory: string, id: int) -> None:
-        self.audio = None
         self.id = id
         self.path = directory
 
@@ -36,7 +35,7 @@ class MusicFile:
         else:
             self.metadata = None
 
-        self.name = os.path.basename(directory)[:-4]
+        self.title = os.path.basename(directory)[:-4]
 
     def get_name(self) -> string:
-        return self.name
+        return self.title

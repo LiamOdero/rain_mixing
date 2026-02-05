@@ -43,10 +43,10 @@ def playback_worker(file_dict: dict[string, string],
         file_paths = list(file_dict)
         i = 0
         while i < len(file_paths):
-            path = file_paths[i]
             if stop_event.is_set():
                 break
 
+            path = file_paths[i % len(file_paths)]
             file_id = file_dict[path]
             audio = load_audio(path)
 
@@ -91,12 +91,12 @@ def playback_worker(file_dict: dict[string, string],
 
             with sd.OutputStream(samplerate=sample_rate, channels=channels,
                                  callback=callback, dtype=dtype):
-                test = 0
                 # This loop keeps the 'with' block alive while the song plays
                 while not stop_event.is_set() and current_frame.value < len(
                         audio_array):
                     sd.sleep(100)
-        i += 1 - loop_flag.value
+            i += 1 - loop_flag.value
+
 
 """
 Manages playing and controlling a MusicFile selected by the user

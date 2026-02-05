@@ -124,7 +124,7 @@ class Directory:
         self_dict = {"name": self_name, "children": []}
 
         for file in self.files:
-            self_dict["children"].append(file.name)
+            self_dict["children"].append(file.title)
 
         for sub_dir in self.sub_directories:
             sub_dict = sub_dir.get_dict()
