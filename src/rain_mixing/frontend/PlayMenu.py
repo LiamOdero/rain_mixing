@@ -229,9 +229,8 @@ class ControlFrame(CTkFrame):
         self.update_elapsed_label()
 
         if progress >= 0.999:
-            if self.loop_flag:
-                self.music_player.seek(0)
-            else:
+            if not self.loop_flag:
+                # todo: check if queue is empty or not
                 self.pause()
                 return
 
@@ -319,6 +318,7 @@ class ControlFrame(CTkFrame):
         else:
             self.loop_button.configure(text="cancel")
         self.loop_flag = not self.loop_flag
+        self.music_player.toggle_loop()
 
 
 """

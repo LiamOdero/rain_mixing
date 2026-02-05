@@ -31,37 +31,40 @@ Worker function that manages playing a single music file to the player
 """
 
 
-def playback_worker(files: dict[string: string], message_queue: Queue,
-                    pause_event: Event, stop_event: Event,
-                    current_frame: Value, frame_total: Value,
-                    volume_val: Value):
-    # TODO: create proper queue
+def playback_worker(file_dict: dict[string, string],
+                    message_queue: Queue,
+                    pause_event: Event,
+                    stop_event: Event,
+                    current_frame: Value,
+                    frame_total: Value,
+                    volume_val: Value,
+                    loop_flag: Value):
+    while not stop_event.is_set():
+        file_paths = list(file_dict)
+        i = 0
+        while i < len(file_paths):
+            path = file_paths[i]
+            if stop_event.is_set():
+                break
 
-    file_paths = list(files)
+            file_id = file_dict[path]
+            audio = load_audio(path)
 
-    for i in range(len(file_paths)):
-        path = file_paths[i]
-        file_id = files[path]
-        audio = load_audio(path)
+            audio_bytes = audio.raw_data
+            sample_rate = audio.frame_rate
+            channels = audio.channels
+            sample_width = audio.sample_width
+            dtype = np.int16 if sample_width == 2 else np.int32
+            audio_array = np.frombuffer(audio_bytes,
+                                        dtype=dtype).reshape(-1, channels)
+            current_frame.value = 0
+            frame_total.value = len(audio_array)
 
-        audio_bytes = audio.raw_data
-        sample_rate = audio.frame_rate
-        channels = audio.channels
-        sample_width = audio.sample_width
-
-        current_frame.value = 0
-
-        dtype = np.int16 if sample_width == 2 else np.int32
-        audio_array = np.frombuffer(audio_bytes, dtype=dtype).reshape(
-            -1, channels)
-        frame_total.value = len(audio_array)
-
-        while not stop_event.is_set():
+            message_queue.put(file_id)
 
             def callback(outdata, frames, _time, _status):
                 if stop_event.is_set():
                     raise sd.CallbackStop()
-
                 if pause_event.is_set():
                     outdata.fill(0)
                     return
@@ -70,51 +73,30 @@ def playback_worker(files: dict[string: string], message_queue: Queue,
                 chunk = audio_array[idx: idx + frames]
 
                 if len(chunk) == 0:
-                    outdata.fill(0)
-                    # Ends the stream, but not the process
                     raise sd.CallbackStop()
 
                 if len(chunk) < frames:
+                    # Process final partial chunk
                     res = (chunk * volume_val.value).astype(dtype)
                     outdata[:len(chunk)] = res
                     outdata[len(chunk):].fill(0)
                     current_frame.value += len(chunk)
                     raise sd.CallbackStop()
                 else:
-                    boosted_chunk = chunk.astype(np.float32) * volume_val.value
-                    # Clipping
-                    if dtype == np.int16:
-                        boosted_chunk = np.clip(boosted_chunk, -32768, 32767)
-                    elif dtype == np.int32:
-                        boosted_chunk = np.clip(boosted_chunk, -2147483648,
-                                                2147483647)
-
-                    outdata[:] = boosted_chunk.astype(dtype)
+                    # Normal playback math
+                    boosted = chunk.astype(np.float32) * volume_val.value
+                    # Clipping logic
+                    outdata[:] = boosted.astype(dtype)
                     current_frame.value += frames
 
-            if pause_event.is_set() or current_frame.value >= len(audio_array):
-                sd.sleep(100)
-                continue
-
-            message_queue.put(file_id)
-
-            # Inner block: Active Audio Stream
-            with sd.OutputStream(samplerate=sample_rate,
-                                 channels=channels,
-                                 callback=callback,
-                                 dtype=dtype,
-                                 blocksize=1024):
-
-                while not stop_event.is_set() \
-                        and current_frame.value < len(audio_array):
-                    if pause_event.is_set():
-                        sd.sleep(100)
-                        continue
+            with sd.OutputStream(samplerate=sample_rate, channels=channels,
+                                 callback=callback, dtype=dtype):
+                test = 0
+                # This loop keeps the 'with' block alive while the song plays
+                while not stop_event.is_set() and current_frame.value < len(
+                        audio_array):
                     sd.sleep(100)
-
-                if stop_event.is_set():
-                    break
-
+        i += 1 - loop_flag.value
 
 """
 Manages playing and controlling a MusicFile selected by the user
@@ -152,6 +134,8 @@ class MusicPlayer:
         self.curr_frame = Value('i', 0)
         self.curr_frame_total = Value('i', 0)
 
+        self.loop_flag = Value('i', 0)
+
         self.music_lookup = {}
 
         self.root = root
@@ -185,6 +169,7 @@ class MusicPlayer:
                 self.curr_frame,
                 self.curr_frame_total,
                 self.volume,
+                self.loop_flag,
             )
         )
         self.music_process.start()
@@ -236,6 +221,9 @@ class MusicPlayer:
 
     def seek(self, value: int) -> None:
         self.curr_frame.value = value
+
+    def toggle_loop(self) -> None:
+        self.loop_flag.value = 1 - self.loop_flag.value
 
     """
     Returns a value from 0.0-1.0 representing percent completion of the current
