@@ -24,7 +24,7 @@ class Window(CTk):
 
         self.logger = DirectoryLogger()
 
-        self.music_player = MusicPlayer()
+        self.music_player = MusicPlayer(self)
 
         self.root = self.logger.load_dirs()
         self.screen = Screen(self, self.root, self.music_player)

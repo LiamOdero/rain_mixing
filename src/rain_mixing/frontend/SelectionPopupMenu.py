@@ -63,7 +63,7 @@ class SelectionPopupMenu(CTkPopupMenu):
             self.play_row.configure(command=lambda: print(name))
         else:
             self.play_row.configure(
-                command=lambda: self.music_player.play_track(selection))
+                command=lambda: self.music_player.play_tracks([selection]))
 
         self.popup(event.x_root, event.y_root)
 

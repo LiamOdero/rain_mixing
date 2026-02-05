@@ -3,6 +3,15 @@ import string
 import eyed3.id3
 from pydub import AudioSegment
 
+
+def load_audio(path: string) -> AudioSegment:
+    try:
+        audio = AudioSegment.from_file(path, path[-3:])
+        return audio
+    except FileNotFoundError:
+        pass
+
+
 """
 Defines a music file stored by the user and some associated metadata
 
@@ -23,16 +32,11 @@ class MusicFile:
         file_metadata = eyed3.load(self.path)
         if file_metadata:
             self.metadata = file_metadata.tag
+            self.dur_s = file_metadata.info.time_secs
         else:
             self.metadata = None
 
         self.name = os.path.basename(directory)[:-4]
-
-    def load_audio(self) -> None:
-        try:
-            self.audio = AudioSegment.from_file(self.path, self.path[-3:])
-        except FileNotFoundError:
-            pass
 
     def get_name(self) -> string:
         return self.name

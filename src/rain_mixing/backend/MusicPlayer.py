@@ -1,8 +1,13 @@
+import queue
+import string
+
 import numpy as np
 import sounddevice as sd
-from multiprocessing import Process, Event, Value
+from multiprocessing import Process, Event, Value, Queue
 
-from rain_mixing.backend.MusicFile import MusicFile
+from customtkinter import CTk
+
+from rain_mixing.backend.MusicFile import MusicFile, load_audio
 from rain_mixing.backend.MusicNotifier import MusicNotifier
 
 """
@@ -26,59 +31,89 @@ Worker function that manages playing a single music file to the player
 """
 
 
-def playback_worker(audio_bytes, sample_rate, channels, sample_width,
+def playback_worker(files: dict[string: string], message_queue: Queue,
                     pause_event: Event, stop_event: Event,
                     current_frame: Value, frame_total: Value,
                     volume_val: Value):
-    dtype = np.int16 if sample_width == 2 else np.int32
-    audio_array = np.frombuffer(audio_bytes, dtype=dtype).reshape(-1, channels)
-    frame_total.value = len(audio_array)
+    # TODO: create proper queue
 
-    while not stop_event.is_set():
+    file_paths = list(files)
 
-        def callback(outdata, frames, _time, _status):
-            if stop_event.is_set():
-                raise sd.CallbackStop()
+    for i in range(len(file_paths)):
+        path = file_paths[i]
+        file_id = files[path]
+        audio = load_audio(path)
 
-            if pause_event.is_set():
-                outdata.fill(0)
-                return
+        audio_bytes = audio.raw_data
+        sample_rate = audio.frame_rate
+        channels = audio.channels
+        sample_width = audio.sample_width
 
-            idx = current_frame.value
-            chunk = audio_array[idx: idx + frames]
+        current_frame.value = 0
 
-            if len(chunk) == 0:
-                outdata.fill(0)
-                raise sd.CallbackStop()  # Ends the stream, but not the process
+        dtype = np.int16 if sample_width == 2 else np.int32
+        audio_array = np.frombuffer(audio_bytes, dtype=dtype).reshape(
+            -1, channels)
+        frame_total.value = len(audio_array)
 
-            if len(chunk) < frames:
-                res = (chunk * volume_val.value).astype(dtype)
-                outdata[:len(chunk)] = res
-                outdata[len(chunk):].fill(0)
-                current_frame.value += len(chunk)
-                raise sd.CallbackStop()
-            else:
-                boosted_chunk = chunk.astype(np.float32) * volume_val.value
-                # Clipping
-                if dtype == np.int16:
-                    boosted_chunk = np.clip(boosted_chunk, -32768, 32767)
-                elif dtype == np.int32:
-                    boosted_chunk = np.clip(boosted_chunk, -2147483648,
-                                            2147483647)
+        while not stop_event.is_set():
 
-                outdata[:] = boosted_chunk.astype(dtype)
-                current_frame.value += frames
+            def callback(outdata, frames, _time, _status):
+                if stop_event.is_set():
+                    raise sd.CallbackStop()
 
-        if pause_event.is_set() or current_frame.value >= len(audio_array):
-            sd.sleep(100)
-            continue
+                if pause_event.is_set():
+                    outdata.fill(0)
+                    return
 
-        # Inner block: Active Audio Stream
-        with sd.OutputStream(samplerate=sample_rate, channels=channels,
-                             callback=callback, dtype=dtype, blocksize=1024):
-            while not stop_event.is_set() and not pause_event.is_set() \
-                    and current_frame.value < len(audio_array):
+                idx = current_frame.value
+                chunk = audio_array[idx: idx + frames]
+
+                if len(chunk) == 0:
+                    outdata.fill(0)
+                    # Ends the stream, but not the process
+                    raise sd.CallbackStop()
+
+                if len(chunk) < frames:
+                    res = (chunk * volume_val.value).astype(dtype)
+                    outdata[:len(chunk)] = res
+                    outdata[len(chunk):].fill(0)
+                    current_frame.value += len(chunk)
+                    raise sd.CallbackStop()
+                else:
+                    boosted_chunk = chunk.astype(np.float32) * volume_val.value
+                    # Clipping
+                    if dtype == np.int16:
+                        boosted_chunk = np.clip(boosted_chunk, -32768, 32767)
+                    elif dtype == np.int32:
+                        boosted_chunk = np.clip(boosted_chunk, -2147483648,
+                                                2147483647)
+
+                    outdata[:] = boosted_chunk.astype(dtype)
+                    current_frame.value += frames
+
+            if pause_event.is_set() or current_frame.value >= len(audio_array):
                 sd.sleep(100)
+                continue
+
+            message_queue.put(file_id)
+
+            # Inner block: Active Audio Stream
+            with sd.OutputStream(samplerate=sample_rate,
+                                 channels=channels,
+                                 callback=callback,
+                                 dtype=dtype,
+                                 blocksize=1024):
+
+                while not stop_event.is_set() \
+                        and current_frame.value < len(audio_array):
+                    if pause_event.is_set():
+                        sd.sleep(100)
+                        continue
+                    sd.sleep(100)
+
+                if stop_event.is_set():
+                    break
 
 
 """
@@ -102,11 +137,13 @@ Manages playing and controlling a MusicFile selected by the user
 
 
 class MusicPlayer:
-    def __init__(self):
+    def __init__(self, root: CTk):
         self.music_process = None
 
         self.pause_event = Event()
         self.stop_event = Event()
+
+        self.updates_queue = Queue()
 
         self.volume = Value('d', 1.0)
         self.muted = False
@@ -115,33 +152,34 @@ class MusicPlayer:
         self.curr_frame = Value('i', 0)
         self.curr_frame_total = Value('i', 0)
 
+        self.music_lookup = {}
+
+        self.root = root
+
         self.notifier = MusicNotifier()
 
     """
-    Spawns a process to play a track selected by the user
+    Spawns a process to play a tracks selected by the user
 
     :param
         -   file: The file selected for playing
     """
 
-    def play_track(self, file: MusicFile) -> None:
-        self.kill_threads()
-
-        file.load_audio()
-        audio = file.audio
+    def play_tracks(self, files: list[MusicFile]) -> None:
+        self.kill_music_thread()
 
         # Reset flags
         self.stop_event.clear()
         self.pause_event.clear()
         self.curr_frame.value = 0
 
+        worker_dict = self.build_lookup(files)
+
         self.music_process = Process(
             target=playback_worker,
             args=(
-                audio.raw_data,
-                audio.frame_rate,
-                audio.channels,
-                audio.sample_width,
+                worker_dict,
+                self.updates_queue,
                 self.pause_event,
                 self.stop_event,
                 self.curr_frame,
@@ -150,7 +188,30 @@ class MusicPlayer:
             )
         )
         self.music_process.start()
-        self.notifier.notify_observers(file)
+        self.check_updates()
+
+    def check_updates(self) -> None:
+        try:
+            if not self.updates_queue.empty():
+                new_file_id = self.updates_queue.get_nowait()
+                new_file = self.music_lookup[new_file_id]
+
+                self.notifier.notify_observers(new_file)
+        except queue.Empty:
+            pass
+        finally:
+            if self.music_process and self.music_process.is_alive():
+                self.root.after(100, self.check_updates)
+
+    def build_lookup(self, files: list[MusicFile]) -> dict[string: string]:
+        self.music_lookup = {}
+        worker_dict = {}
+
+        for file in files:
+            self.music_lookup[file.id] = file
+            worker_dict[file.path] = file.id
+
+        return worker_dict
 
     """
     Clears pause events and plays the current track
@@ -220,13 +281,16 @@ class MusicPlayer:
 
         self.muted = not self.muted
 
+    def kill_music_thread(self) -> None:
+        if self.music_process and self.music_process.is_alive():
+            self.stop_event.set()
+            self.music_process.terminate()
+            self.music_process.join(0.1)
+
     """
     Kills all threads managed by the music player, for usage when the user
     closes the app
     """
 
     def kill_threads(self) -> None:
-        if self.music_process and self.music_process.is_alive():
-            self.stop_event.set()
-            self.music_process.join(0.1)
-            self.music_process.terminate()
+        self.kill_music_thread()
