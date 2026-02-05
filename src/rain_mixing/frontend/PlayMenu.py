@@ -258,7 +258,7 @@ class ControlFrame(CTkFrame):
 
     def slider_touch(self, _event: Event = None) -> None:
         self.playing_prev = self.playing
-        self.pause()
+        self.playing = False
 
     """
     Seeks requested frame and reverts to previous play state once slider is
@@ -321,6 +321,11 @@ class ControlFrame(CTkFrame):
         self.loop_flag = not self.loop_flag
 
 
+"""
+Frame on the right of the play menu allowing for volume control
+"""
+
+
 class VolumeFrame(CTkFrame):
 
     def __init__(self, parent: CTkFrame, music_player: MusicPlayer) -> None:
@@ -343,8 +348,16 @@ class VolumeFrame(CTkFrame):
         self.grid_columnconfigure(0, weight=1)
         self.grid_columnconfigure(1, weight=4)
 
+    """
+    Adjusts volume based off of newly set slider value
+    """
+
     def update_volume(self, value: float) -> None:
         self.music_player.set_volume(value)
+
+    """
+    Toggles whether or not the current track is muted
+    """
 
     def toggle_mute(self) -> None:
         if self.music_player.muted:
