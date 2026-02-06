@@ -1,4 +1,5 @@
 import queue
+import random
 import string
 
 import numpy as np
@@ -35,18 +36,25 @@ def playback_worker(file_dict: dict[string, string],
                     message_queue: Queue,
                     pause_event: Event,
                     stop_event: Event,
+                    next_queue: Queue,
+                    prev_queue: Queue,
                     current_frame: Value,
                     frame_total: Value,
                     volume_val: Value,
-                    loop_flag: Value):
+                    loop_flag: Value,
+                    random_flag: Value):
     while not stop_event.is_set():
         file_paths = list(file_dict)
+        random_idxs = [i for i in range(len(file_paths))]
+        random.shuffle(random_idxs)
+
         i = 0
+        curr_idx = 0
         while i < len(file_paths):
             if stop_event.is_set():
                 break
 
-            path = file_paths[i % len(file_paths)]
+            path = file_paths[curr_idx % len(file_paths)]
             file_id = file_dict[path]
             audio = load_audio(path)
 
@@ -72,7 +80,8 @@ def playback_worker(file_dict: dict[string, string],
                 idx = current_frame.value
                 chunk = audio_array[idx: idx + frames]
 
-                if len(chunk) == 0:
+                if len(chunk) == 0 and not (
+                        next_queue.empty() or prev_queue.empty()):
                     raise sd.CallbackStop()
 
                 if len(chunk) < frames:
@@ -93,9 +102,25 @@ def playback_worker(file_dict: dict[string, string],
                                  callback=callback, dtype=dtype):
                 # This loop keeps the 'with' block alive while the song plays
                 while not stop_event.is_set() and current_frame.value < len(
-                        audio_array):
+                        audio_array) and next_queue.empty() and prev_queue.empty():
                     sd.sleep(100)
-            i += 1 - loop_flag.value
+
+            add_val = 0
+            if not next_queue.empty() or not prev_queue.empty():
+                while not next_queue.empty():
+                    add_val += next_queue.get()
+
+                while not prev_queue.empty():
+                    add_val -= prev_queue.get()
+            else:
+                add_val = 1 - loop_flag.value
+
+            i += add_val
+            if random_flag.value:
+                curr_idx = random_idxs[i]
+            else:
+                curr_idx = i
+
 
 
 """
@@ -125,6 +150,9 @@ class MusicPlayer:
         self.pause_event = Event()
         self.stop_event = Event()
 
+        self.prev_queue = Queue()
+        self.next_queue = Queue()
+
         self.updates_queue = Queue()
 
         self.volume = Value('d', 1.0)
@@ -135,6 +163,8 @@ class MusicPlayer:
         self.curr_frame_total = Value('i', 0)
 
         self.loop_flag = Value('i', 0)
+
+        self.shuffle_flag = Value('i', 0)
 
         self.music_lookup = {}
 
@@ -166,10 +196,13 @@ class MusicPlayer:
                 self.updates_queue,
                 self.pause_event,
                 self.stop_event,
+                self.next_queue,
+                self.prev_queue,
                 self.curr_frame,
                 self.curr_frame_total,
                 self.volume,
                 self.loop_flag,
+                self.shuffle_flag,
             )
         )
         self.music_process.start()
@@ -225,6 +258,9 @@ class MusicPlayer:
     def toggle_loop(self) -> None:
         self.loop_flag.value = 1 - self.loop_flag.value
 
+    def toggle_shuffle(self) -> None:
+        self.shuffle_flag.value = 1 - self.shuffle_flag.value
+
     """
     Returns a value from 0.0-1.0 representing percent completion of the current
     track
@@ -268,6 +304,12 @@ class MusicPlayer:
             self.volume.value = 0
 
         self.muted = not self.muted
+
+    def fire_next(self) -> None:
+        self.next_queue.put(1)
+
+    def fire_prev(self) -> None:
+        self.prev_queue.put(1)
 
     def kill_music_thread(self) -> None:
         if self.music_process and self.music_process.is_alive():

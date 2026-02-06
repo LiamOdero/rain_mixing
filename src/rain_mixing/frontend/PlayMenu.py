@@ -141,6 +141,7 @@ class ControlFrame(CTkFrame):
         self.playing = False
         self.playing_prev = False
         self.loop_flag = False
+        self.shuffle_flag = False
         self.music_player = music_player
 
         self.grid_columnconfigure(1, weight=1)
@@ -156,10 +157,13 @@ class ControlFrame(CTkFrame):
         self.shuffle_button = CTkButton(self.button_container, text="shuffle",
                                         width=60)
         self.shuffle_button.grid(row=0, column=0, padx=2)
+        self.shuffle_button.configure(command=lambda: self.toggle_shuffle())
 
         self.prev_button = CTkButton(self.button_container, text="prev",
                                      width=60, state="disabled")
         self.prev_button.grid(row=0, column=1, padx=2)
+        self.prev_button.configure(command=lambda:
+                                   self.fire_prev())
 
         self.play_button = CTkButton(self.button_container, text="play",
                                      width=60, state="disabled")
@@ -169,6 +173,8 @@ class ControlFrame(CTkFrame):
         self.next_button = CTkButton(self.button_container, text="next",
                                      width=60, state="disabled")
         self.next_button.grid(row=0, column=3, padx=2)
+        self.next_button.configure(command=lambda:
+                                   self.fire_next())
 
         self.loop_button = CTkButton(self.button_container, text="loop",
                                      width=60)
@@ -313,6 +319,20 @@ class ControlFrame(CTkFrame):
             self.loop_button.configure(text="cancel")
         self.loop_flag = not self.loop_flag
         self.music_player.toggle_loop()
+
+    def fire_next(self) -> None:
+        self.music_player.fire_next()
+
+    def fire_prev(self) -> None:
+        self.music_player.fire_prev()
+
+    def toggle_shuffle(self) -> None:
+        if self.shuffle_flag:
+            self.shuffle_button.configure(text="shuffle")
+        else:
+            self.shuffle_button.configure(text="cancel")
+        self.shuffle_flag = not self.shuffle_flag
+        self.music_player.toggle_shuffle()
 
 
 """
