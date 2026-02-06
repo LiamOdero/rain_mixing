@@ -1,13 +1,19 @@
+import multiprocessing
 import queue
 import random
 import string
+from typing import Union
 
 import numpy as np
 import sounddevice as sd
-from multiprocessing import Process, Event, Value, Queue
+from torch.multiprocessing import Process, Event, Value, Queue
 
 from customtkinter import CTk
 
+from auto_mixing.data.logging import load_model
+from auto_mixing.models.ChunkMixingNN import ChunkMixingNN
+from auto_mixing.models.MixingNN import MixingNN
+from constants.file_constants import RAIN_FILE, MODEL_NUM
 from rain_mixing.backend.MusicFile import MusicFile, load_audio
 from rain_mixing.backend.MusicNotifier import MusicNotifier
 
@@ -33,6 +39,7 @@ Worker function that manages playing a single music file to the player
 
 
 def playback_worker(file_dict: dict[string, string],
+                    model: Union[MixingNN, None],
                     message_queue: Queue,
                     pause_event: Event,
                     stop_event: Event,
@@ -57,6 +64,9 @@ def playback_worker(file_dict: dict[string, string],
             path = file_paths[curr_idx % len(file_paths)]
             file_id = file_dict[path]
             audio = load_audio(path)
+
+            if model:
+                audio = model.mix_track(audio)
 
             audio_bytes = audio.raw_data
             sample_rate = audio.frame_rate
@@ -101,8 +111,9 @@ def playback_worker(file_dict: dict[string, string],
             with sd.OutputStream(samplerate=sample_rate, channels=channels,
                                  callback=callback, dtype=dtype):
                 # This loop keeps the 'with' block alive while the song plays
-                while not stop_event.is_set() and current_frame.value < len(
-                        audio_array) and next_queue.empty() and prev_queue.empty():
+                while not stop_event.is_set() and (
+                        current_frame.value < len(audio_array) and (
+                        next_queue.empty() and prev_queue.empty())):
                     sd.sleep(100)
 
             add_val = 0
@@ -120,7 +131,6 @@ def playback_worker(file_dict: dict[string, string],
                 curr_idx = random_idxs[i]
             else:
                 curr_idx = i
-
 
 
 """
@@ -148,6 +158,7 @@ class MusicPlayer:
         self.music_process = None
 
         self.pause_event = Event()
+        self.pause_event.set()
         self.stop_event = Event()
 
         self.prev_queue = Queue()
@@ -172,6 +183,33 @@ class MusicPlayer:
 
         self.notifier = MusicNotifier()
 
+        multiprocessing.set_start_method("spawn", force=True)
+
+        self.model = ChunkMixingNN()
+        self.model.share_memory()
+        load_model(self.model, MODEL_NUM)
+
+        # Most of the values we dont actually care about, but rain in the bg
+        # should share volume with and pausing with the main track
+        self.rain_thread = Process(
+            target=playback_worker,
+            args=(
+                {RAIN_FILE: ""},
+                None,
+                Queue(),
+                self.pause_event,
+                Event(),
+                Queue(),
+                Queue(),
+                Value('i', 0),
+                Value('i', 0),
+                self.volume,
+                Value('i', 1),
+                Value('i', 0),
+            )
+        )
+        self.rain_thread.start()
+
     """
     Spawns a process to play a tracks selected by the user
 
@@ -184,7 +222,6 @@ class MusicPlayer:
 
         # Reset flags
         self.stop_event.clear()
-        self.pause_event.clear()
         self.curr_frame.value = 0
 
         worker_dict = self.build_lookup(files)
@@ -193,6 +230,7 @@ class MusicPlayer:
             target=playback_worker,
             args=(
                 worker_dict,
+                self.model,
                 self.updates_queue,
                 self.pause_event,
                 self.stop_event,
@@ -211,6 +249,9 @@ class MusicPlayer:
     def check_updates(self) -> None:
         try:
             if not self.updates_queue.empty():
+                # clear the pause once the message comes through since that
+                # signifies the track is ready to play
+                self.pause_event.clear()
                 new_file_id = self.updates_queue.get_nowait()
                 new_file = self.music_lookup[new_file_id]
 
@@ -314,8 +355,13 @@ class MusicPlayer:
     def kill_music_thread(self) -> None:
         if self.music_process and self.music_process.is_alive():
             self.stop_event.set()
-            self.music_process.terminate()
-            self.music_process.join(0.1)
+            self.pause_event.set()
+
+            self.music_process.join(timeout=2.0)
+
+            if self.music_process.is_alive():
+                self.music_process.terminate()
+                self.music_process.join()
 
     """
     Kills all threads managed by the music player, for usage when the user
@@ -324,3 +370,7 @@ class MusicPlayer:
 
     def kill_threads(self) -> None:
         self.kill_music_thread()
+
+        if self.rain_thread and self.rain_thread.is_alive():
+            self.rain_thread.terminate()
+            self.rain_thread.join(0.1)

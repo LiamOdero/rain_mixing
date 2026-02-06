@@ -13,6 +13,9 @@ MODEL_DIR = os.path.join(ROOT, "models")
 ASSET_DIR = os.path.join(ROOT, "src", "assets")
 GUI_ASSET_DIR = os.path.join(ASSET_DIR, "gui")
 
+RAIN_FILE = os.path.join(ASSET_DIR, "rain_sfx.mp3")
+MODEL_NUM = 0
+
 LOGGING_EXTENSION = "wav"
 EXTENSION_DIALOGUES = [('Music files', '*.wav'), ('Music files', '*.mp3')]
 EXTENSION_LIST = ["wav", "mp3"]
