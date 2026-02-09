@@ -21,26 +21,28 @@ from rain_mixing.backend.MusicNotifier import MusicNotifier
 Worker function that manages playing a single music file to the player
 
 :param
-    -   audio_bytes: The raw bytes read from the audio file
-    -   sample_rate: Sample rate recorded in the original music file
-    -   channels: Number of channels recorded in the original music file
-    -   sample_width: Sample width recorded in the original music file
+    -   file_queue: Message Queue detailing requested files to play
+    -   sample_rate: The model used to mix file audio, if any
+    -   out_queue: Message queue to inform main thread of changes in played
+    music
     -   pause_event: A shared memory event determining if music should be
     paused
     -   stop_event: A shared memory event determining if this worker should
     terminate
-    -   current_frame: A shared memory value of the frame currently
-    played by the worker
-    -   frame_total: A shared memory value of the total number of frames in
-    the current music
+    -   next_queue: Message Queue to make requests to go to next file
+    -   prev_queue: Message Queue to make requests to go to the previous file
+    -   frame_total: A shared memory value of the current total number of
+    frames in the currently played music
     -   volume_val: A shared memory value of a value from 0-2.0 of modifiers to
     the base volume
+    -   loop_flag: Determines if the currently played music should be looped
+    -   random_flag: Determines if the next selected track should be random
 """
 
 
-def playback_worker(file_dict: dict[string, string],
+def playback_worker(file_queue: Queue,
                     model: Union[MixingNN, None],
-                    message_queue: Queue,
+                    out_queue: Queue,
                     pause_event: Event,
                     stop_event: Event,
                     next_queue: Queue,
@@ -50,16 +52,26 @@ def playback_worker(file_dict: dict[string, string],
                     volume_val: Value,
                     loop_flag: Value,
                     random_flag: Value):
+    file_dict = {}
     while not stop_event.is_set():
+        while not file_queue.empty():
+            # empty the file queue and only play the most recent request
+            file_dict = file_queue.get()
+
         file_paths = list(file_dict)
         random_idxs = [i for i in range(len(file_paths))]
         random.shuffle(random_idxs)
 
         i = 0
-        curr_idx = 0
-        while i < len(file_paths):
+
+        while file_queue.empty() and file_paths:
             if stop_event.is_set():
                 break
+
+            if random_flag.value and not loop_flag.value:
+                curr_idx = random_idxs[i]
+            else:
+                curr_idx = i
 
             path = file_paths[curr_idx % len(file_paths)]
             file_id = file_dict[path]
@@ -78,7 +90,7 @@ def playback_worker(file_dict: dict[string, string],
             current_frame.value = 0
             frame_total.value = len(audio_array)
 
-            message_queue.put(file_id)
+            out_queue.put(file_id)
 
             def callback(outdata, frames, _time, _status):
                 if stop_event.is_set():
@@ -91,7 +103,8 @@ def playback_worker(file_dict: dict[string, string],
                 chunk = audio_array[idx: idx + frames]
 
                 if len(chunk) == 0 and not (
-                        next_queue.empty() or prev_queue.empty()):
+                        next_queue.empty() or prev_queue.empty() or
+                        file_queue.empty() or loop_flag.value):
                     raise sd.CallbackStop()
 
                 if len(chunk) < frames:
@@ -100,7 +113,9 @@ def playback_worker(file_dict: dict[string, string],
                     outdata[:len(chunk)] = res
                     outdata[len(chunk):].fill(0)
                     current_frame.value += len(chunk)
-                    raise sd.CallbackStop()
+
+                    if not loop_flag.value:
+                        raise sd.CallbackStop()
                 else:
                     # Normal playback math
                     boosted = chunk.astype(np.float32) * volume_val.value
@@ -113,10 +128,17 @@ def playback_worker(file_dict: dict[string, string],
                 # This loop keeps the 'with' block alive while the song plays
                 while not stop_event.is_set() and (
                         current_frame.value < len(audio_array) and (
-                        next_queue.empty() and prev_queue.empty())):
+                        next_queue.empty() and prev_queue.empty() and (
+                        file_queue.empty()
+                        ))):
                     sd.sleep(100)
 
+            if not file_queue.empty():
+                # reset loop to get the next file
+                break
+
             add_val = 0
+            # emptying next / prev requests
             if not next_queue.empty() or not prev_queue.empty():
                 while not next_queue.empty():
                     add_val += next_queue.get()
@@ -125,37 +147,45 @@ def playback_worker(file_dict: dict[string, string],
                     add_val -= prev_queue.get()
             else:
                 add_val = 1 - loop_flag.value
-
             i += add_val
-            if random_flag.value:
-                curr_idx = random_idxs[i]
-            else:
-                curr_idx = i
 
 
 """
 Manages playing and controlling a MusicFile selected by the user
 
 :attributes
-    -   music_process: The current process managing the playing of music
+    -   music_process: The process managing the playing of music
+    -   file_queue: Message Queue detailing requested files to play
     -   pause_event: A shared memory event determining if music should be
     paused
     -   stop_event: A shared memory event determining if this worker should
     terminate
+    -   next_queue: Message Queue to make requests to go to next file
+    -   prev_queue: Message Queue to make requests to go to the previous file
+    -   update_queue: Message queue to inform main thread of changes in played
+    music
     -   volume: A shared memory value of a value from 0-2.0 of modifiers to
     the base volume
+    -   muted: A shared memory value determining if music should be muted
     -   prev_volume: Volume set prior to muting a track
     -   curr_frame: A shared memory value of the frame currently
     played by the worker
     -   curr_frame_total: A shared memory value of the total number of frames
     in the current music
+    -   loop_flag: Determines if the currently played music should be looped
+    -   shuffle_flag: Determines if the next selected track should be random
+    -   music_lookup: Lookup table of music ids to file paths
+    -   root: The window of the application
     -   notifier: A MusicNotifier used to make updates to the frontend
+    -   model: The model used to mix music
+    -   rain_thread: The process managing rain SFX
 """
 
 
 class MusicPlayer:
     def __init__(self, root: CTk):
         self.music_process = None
+        self.file_queue = Queue()
 
         self.pause_event = Event()
         self.pause_event.set()
@@ -189,12 +219,15 @@ class MusicPlayer:
         self.model.share_memory()
         load_model(self.model, MODEL_NUM)
 
+        rain_queue = Queue()
+        rain_queue.put({RAIN_FILE: ""})
+
         # Most of the values we dont actually care about, but rain in the bg
         # should share volume with and pausing with the main track
         self.rain_thread = Process(
             target=playback_worker,
             args=(
-                {RAIN_FILE: ""},
+                rain_queue,
                 None,
                 Queue(),
                 self.pause_event,
@@ -210,26 +243,10 @@ class MusicPlayer:
         )
         self.rain_thread.start()
 
-    """
-    Spawns a process to play a tracks selected by the user
-
-    :param
-        -   file: The file selected for playing
-    """
-
-    def play_tracks(self, files: list[MusicFile]) -> None:
-        self.kill_music_thread()
-
-        # Reset flags
-        self.stop_event.clear()
-        self.curr_frame.value = 0
-
-        worker_dict = self.build_lookup(files)
-
         self.music_process = Process(
             target=playback_worker,
             args=(
-                worker_dict,
+                self.file_queue,
                 self.model,
                 self.updates_queue,
                 self.pause_event,
@@ -244,7 +261,26 @@ class MusicPlayer:
             )
         )
         self.music_process.start()
+
+    """
+    Spawns a process to play a tracks selected by the user
+
+    :param
+        -   file: The file selected for playing
+    """
+
+    def play_tracks(self, files: list[MusicFile]) -> None:
+        self.curr_frame.value = 0
+        self.pause_event.set()
+
+        worker_dict = self.build_lookup(files)
+        self.file_queue.put(worker_dict)
+
         self.check_updates()
+
+    """
+    Periodically checks if there are any changes in the currently played music
+    """
 
     def check_updates(self) -> None:
         try:
@@ -261,6 +297,18 @@ class MusicPlayer:
         finally:
             if self.music_process and self.music_process.is_alive():
                 self.root.after(100, self.check_updates)
+
+    """
+    Uses a list of music files to build a lookup table of file ids to paths
+    and vice versa
+
+    :param
+        -   files: The list of files to make a lookup table for
+
+    :return
+        -   worker_dict: A lookup table of paths to ids for worker thread
+        use
+    """
 
     def build_lookup(self, files: list[MusicFile]) -> dict[string: string]:
         self.music_lookup = {}
@@ -296,8 +344,16 @@ class MusicPlayer:
     def seek(self, value: int) -> None:
         self.curr_frame.value = value
 
+    """
+    Toggles whether or not the music player is set to loop the current track
+    """
+
     def toggle_loop(self) -> None:
         self.loop_flag.value = 1 - self.loop_flag.value
+
+    """
+    Toggles whether or not the music player is set to shuffle track order
+    """
 
     def toggle_shuffle(self) -> None:
         self.shuffle_flag.value = 1 - self.shuffle_flag.value
@@ -346,11 +402,23 @@ class MusicPlayer:
 
         self.muted = not self.muted
 
+    """
+    Makes a request to move to the next track in the current playlist
+    """
+
     def fire_next(self) -> None:
         self.next_queue.put(1)
 
+    """
+    Makes a request to move to the previous track in the current playlist
+    """
+
     def fire_prev(self) -> None:
         self.prev_queue.put(1)
+
+    """
+    Safely kills the currently active music thread
+    """
 
     def kill_music_thread(self) -> None:
         if self.music_process and self.music_process.is_alive():

@@ -16,7 +16,6 @@ class Window(CTk):
         self.title("Rain Music Player")
 
         # Window Resolution
-        # TODO: Initial geometry + placement
         self.geometry("1600x800")
 
         self.grid_columnconfigure(0, weight=1)

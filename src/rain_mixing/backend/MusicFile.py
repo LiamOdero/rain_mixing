@@ -3,6 +3,17 @@ import string
 import eyed3.id3
 from pydub import AudioSegment
 
+"""
+Loads an audiosegment from the request path and returns it.
+
+:param
+    -   path: The exact path to the file to load
+:return
+    -   audio: The audiosegment constructed by loading the audio file
+:raise
+    -   FileNotFoundError: When the requested file cannot be loaded
+"""
+
 
 def load_audio(path: string) -> AudioSegment:
     try:
@@ -16,9 +27,12 @@ def load_audio(path: string) -> AudioSegment:
 Defines a music file stored by the user and some associated metadata
 
 :attributes
-    -   directory: The full path where the actual music file this class
-    represents is held
     -   id: A unique identifier for this music file
+    -   path: The full path to the specified file
+    PRECONDITION: path refers to a real supported music file at the time of
+    file loading (ie: could be deleted before application closes)
+    -   metadata: Contains the metadata stored in the associated file
+    -   title: The name of the file
 """
 
 

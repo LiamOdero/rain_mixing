@@ -70,8 +70,6 @@ class FileMenu(StateObserver):
                         font=("Segoe UI", 14),  # Change font family and size
                         rowheight=30)
 
-        # TODO: scrollbar hiding?
-
         self.scrollbar = CTkScrollbar(self.table,
                                       command=self.table.treeview.yview)
         self.table.treeview.configure(yscrollcommand=self.scrollbar.set)
@@ -128,24 +126,6 @@ class FileMenu(StateObserver):
     """
 
     def load_files(self, new_dir: Directory) -> None:
-        # files = new_dir.get_files()
-        # file_total = len(files)
-        # # TODO: see if i can place it anywhere else
-        # progress = CTkProgressPopup(self, title="Loading Files...",
-        #                             side="left_top",
-        #                             label="",
-        #                             message=f"0 / {file_total}")
-        #
-        # for i in range(file_total):
-        #     file = files[i]
-        #     file.load_audio()
-        #     total_progress = i / len(files)
-        #     progress.update_progress(total_progress)
-        #     progress.update_message(f"{i + 1} / {file_total}")
-        #
-        # progress.update_progress(1.0)
-        # self.after(0, progress.cancel_task)
-
         new_rep = new_dir.get_dict()
 
         self.insert_items(new_rep, [new_dir])
