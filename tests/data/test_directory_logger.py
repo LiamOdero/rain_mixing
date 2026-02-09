@@ -66,8 +66,8 @@ def test_load_files() -> None:
     assert file_dir.num_files == 2
     assert file_dir.sub_directories == []
 
-    assert file_dir.files[0].name == "output_0"
-    assert file_dir.files[1].name == "output_1"
+    assert file_dir.files[0].title == "output_0"
+    assert file_dir.files[1].title == "output_1"
 
 
 """
@@ -84,13 +84,13 @@ def test_init_sub_dir() -> None:
     assert sub_dir.get_name() == "sub_dir"
     assert sub_dir.num_files == 3
 
-    assert sub_dir.files[0].name == "output_0"
+    assert sub_dir.files[0].title == "output_0"
 
     assert len(sub_dir.sub_directories) == 1
 
     sub_sub_path = os.path.join(sub_path, "file_sub")
     sub_sub_dir = sub_dir.sub_directories[0]
     assert sub_sub_dir.num_files == 1
-    assert sub_sub_dir.files[0].name == "output_1"
+    assert sub_sub_dir.files[0].title == "output_1"
     assert sub_sub_dir.path == sub_sub_path
     assert sub_sub_dir.get_name() == "file_sub"
