@@ -69,7 +69,7 @@ def playback_worker(file_queue: Queue,
                 break
 
             if random_flag.value and not loop_flag.value:
-                curr_idx = random_idxs[i]
+                curr_idx = random_idxs[i % len(random_idxs)]
             else:
                 curr_idx = i
 
@@ -102,25 +102,28 @@ def playback_worker(file_queue: Queue,
                 idx = current_frame.value
                 chunk = audio_array[idx: idx + frames]
 
-                if len(chunk) == 0 and not (
-                        next_queue.empty() or prev_queue.empty() or
-                        file_queue.empty() or loop_flag.value):
-                    raise sd.CallbackStop()
-
                 if len(chunk) < frames:
-                    # Process final partial chunk
-                    res = (chunk * volume_val.value).astype(dtype)
-                    outdata[:len(chunk)] = res
-                    outdata[len(chunk):].fill(0)
-                    current_frame.value += len(chunk)
+                    if loop_flag.value:
+                        remaining = frames - len(chunk)
+                        outdata[:len(chunk)] = (
+                                    chunk * volume_val.value).astype(dtype)
 
-                    if not loop_flag.value:
+                        # Reset the pointer and grab the start of the audio
+                        loop_chunk = audio_array[0:remaining]
+                        outdata[len(chunk):] = (
+                                loop_chunk * volume_val.value).astype(dtype)
+                        current_frame.value = remaining
+                    else:
+                        # End of track logic
+                        outdata[:len(chunk)] = (
+                                    chunk * volume_val.value).astype(dtype)
+                        outdata[len(chunk):].fill(0)
+                        current_frame.value += len(chunk)
                         raise sd.CallbackStop()
                 else:
-                    # Normal playback math
-                    boosted = chunk.astype(np.float32) * volume_val.value
-                    # Clipping logic
-                    outdata[:] = boosted.astype(dtype)
+                    # Normal playback
+                    outdata[:] = (chunk.astype(
+                        np.float32) * volume_val.value).astype(dtype)
                     current_frame.value += frames
 
             with sd.OutputStream(samplerate=sample_rate, channels=channels,

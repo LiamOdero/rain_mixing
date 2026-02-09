@@ -72,8 +72,8 @@ def test_init_file_dir() -> None:
     assert pytest.file_dir.num_files == 2
     assert pytest.file_dir.sub_directories == []
 
-    assert pytest.file_dir.files[0].name == "output_0"
-    assert pytest.file_dir.files[1].name == "output_1"
+    assert pytest.file_dir.files[0].title == "output_0"
+    assert pytest.file_dir.files[1].title == "output_1"
 
 
 """
@@ -88,14 +88,14 @@ def test_init_sub_dir() -> None:
     assert pytest.sub_dir.get_name() == "sub_dir"
     assert pytest.sub_dir.num_files == 3
 
-    assert pytest.sub_dir.files[0].name == "output_0"
+    assert pytest.sub_dir.files[0].title == "output_0"
 
     assert len(pytest.sub_dir.sub_directories) == 1
 
     sub_sub_path = os.path.join(sub_path, "file_sub")
     sub_sub_dir = pytest.sub_dir.sub_directories[0]
     assert sub_sub_dir.num_files == 1
-    assert sub_sub_dir.files[0].name == "output_1"
+    assert sub_sub_dir.files[0].title == "output_1"
     assert sub_sub_dir.path == sub_sub_path
     assert sub_sub_dir.get_name() == "file_sub"
 
@@ -206,8 +206,8 @@ def test_get_files_flat() -> None:
     result = pytest.file_dir.get_files()
     assert len(result) == 2
 
-    assert result[0].name == "output_0"
-    assert result[1].name == "output_1"
+    assert result[0].title == "output_0"
+    assert result[1].title == "output_1"
 
 
 """
@@ -219,8 +219,8 @@ def test_get_files_sub() -> None:
     result = pytest.sub_dir.get_files()
     assert len(result) == 2
 
-    assert result[0].name == "output_0"
-    assert result[1].name == "output_1"
+    assert result[0].title == "output_0"
+    assert result[1].title == "output_1"
 
 
 """
