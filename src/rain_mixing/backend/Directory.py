@@ -83,7 +83,7 @@ class Directory:
 
             # finding all file matches
             for file in self.files:
-                if term in file.name.lower():
+                if term in file.title.lower():
                     file_matches.append(file)
                     total_files += 1
 
