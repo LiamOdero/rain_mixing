@@ -1,0 +1,381 @@
+import io
+import os
+from tkinter import Event
+
+from PIL import Image
+from customtkinter import CTkFrame, CTkLabel, CTkButton, CTkSlider, CTkImage
+
+from constants.file_constants import GUI_ASSET_DIR
+from rain_mixing.backend.MusicFile import MusicFile
+from rain_mixing.backend.MusicPlayer import MusicPlayer
+from rain_mixing.frontend.StateObserver import StateObserver
+
+
+class PlayMenu(StateObserver):
+
+    def __init__(self, parent: CTkFrame, music_player: MusicPlayer):
+        super().__init__(parent)
+        self.configure(corner_radius=0,
+                       height=90,
+                       fg_color="#1c1c1c")
+
+        self.information_frame = InformationFrame(self)
+        self.information_frame.grid(row=0, column=0,
+                                    sticky="nsew",
+                                    padx=(10, 30),
+                                    pady=(15, 5))
+        self.grid_columnconfigure(0, weight=1, uniform="group1")
+
+        self.control_frame = ControlFrame(self, music_player)
+        self.control_frame.grid(row=0, column=1,
+                                sticky="nsew",
+                                padx=(30, 30),
+                                pady=(15, 5)),
+        self.grid_columnconfigure(1, weight=5)
+
+        self.volume_frame = VolumeFrame(self, music_player)
+        self.volume_frame.grid(row=0, column=2,
+                               sticky="nsew",
+                               padx=(30, 10),
+                               pady=(15, 5))
+        self.grid_columnconfigure(2, weight=1, uniform="group1")
+
+    """
+    Notifies subcomponents of change in played music
+
+    :param
+        -   file: The music file currently playing
+    """
+
+    def update_state(self, state: MusicFile) -> None:
+        self.information_frame.update_state(state)
+        self.control_frame.update_state(state)
+
+
+"""
+Frame on the left of the play menu displaying track information
+"""
+
+
+class InformationFrame(CTkFrame):
+
+    def __init__(self, parent: CTkFrame) -> None:
+        super().__init__(parent, fg_color="#1c1c1c")
+        self.configure(corner_radius=0,
+                       height=90)
+        self.grid_propagate(False)
+
+        self.grid_columnconfigure(0, minsize=1)
+        self.grid_columnconfigure(1, weight=1)
+
+        self.grid_rowconfigure(0, weight=1)
+        self.grid_rowconfigure(1, weight=1)
+
+        placeholder_path = os.path.join(GUI_ASSET_DIR, "cover_placeholder.png")
+        placeholder_cover = Image.open(placeholder_path)
+
+        self.placeholder_image = CTkImage(light_image=placeholder_cover,
+                                          dark_image=placeholder_cover,
+                                          size=(90, 90))
+
+        self.image_label = CTkLabel(self, text="")
+        self.image_label.grid(column=0, row=0, rowspan=2,
+                              sticky="nsew", padx=(15, 10))
+
+        self.image_label.configure(image=self.placeholder_image)
+        self.image_label.image = self.placeholder_image
+
+        self.title_label = CTkLabel(self, text="Select A Track...",
+                                    anchor="center", justify="center",
+                                    font=("Segoe UI", 16))
+        self.title_label.grid(column=1, row=0, sticky="sew")
+
+        self.author_label = CTkLabel(self, text="...",
+                                     anchor="center", justify="center",
+                                     font=("Segoe UI", 12))
+        self.author_label.grid(column=1, row=1, sticky="nsew", padx=(15, 10))
+
+    """
+    Updates UI to present information on the selected track and plays it
+
+    :param
+        -   state: Data for the track to play
+    """
+
+    def update_state(self, state: MusicFile) -> None:
+        # change music title
+        self.title_label.configure(text=state.title)
+
+        # show cover image
+        ctk_img = None
+        if state.metadata:
+            self.author_label.configure(text=state.metadata.artist)
+
+            for i in state.metadata.images:
+                raw_data = io.BytesIO(i.image_data)
+                pil_img = Image.open(raw_data)
+
+                ctk_img = CTkImage(light_image=pil_img,
+                                   dark_image=pil_img,
+                                   size=(90, 90))
+
+        else:
+            self.author_label.configure(text="Unknown Artist")
+
+        # placeholder if file has no cover data
+        if ctk_img is None:
+            ctk_img = self.placeholder_image
+
+        self.image_label.configure(image=ctk_img)
+        self.image_label.image = ctk_img
+
+
+"""
+Frame on the left of the play menu allowing user to control playing state
+"""
+
+
+class ControlFrame(CTkFrame):
+    def __init__(self, parent: CTkFrame, music_player: MusicPlayer) -> None:
+        super().__init__(parent, fg_color="#1c1c1c")
+        self.playing = False
+        self.playing_prev = False
+        self.loop_flag = False
+        self.shuffle_flag = False
+        self.music_player = music_player
+
+        self.grid_columnconfigure(1, weight=1)
+        self.grid_rowconfigure((0, 1), weight=1)
+
+        self.curr_total_time_s = 0
+
+        # setting up buttons on row 0
+        self.button_container = CTkFrame(self, fg_color="transparent")
+        self.button_container.grid(row=0, column=1,
+                                   sticky="n", pady=10)
+
+        self.shuffle_button = CTkButton(self.button_container, text="shuffle",
+                                        width=60)
+        self.shuffle_button.grid(row=0, column=0, padx=2)
+        self.shuffle_button.configure(command=lambda: self.toggle_shuffle())
+
+        self.prev_button = CTkButton(self.button_container, text="prev",
+                                     width=60, state="disabled")
+        self.prev_button.grid(row=0, column=1, padx=2)
+        self.prev_button.configure(command=lambda:
+                                   self.fire_prev())
+
+        self.play_button = CTkButton(self.button_container, text="play",
+                                     width=60, state="disabled")
+        self.play_button.configure(command=lambda: self.toggle_pause())
+        self.play_button.grid(row=0, column=2, padx=2)
+
+        self.next_button = CTkButton(self.button_container, text="next",
+                                     width=60, state="disabled")
+        self.next_button.grid(row=0, column=3, padx=2)
+        self.next_button.configure(command=lambda:
+                                   self.fire_next())
+
+        self.loop_button = CTkButton(self.button_container, text="loop",
+                                     width=60)
+        self.loop_button.configure(command=lambda:
+                                   self.toggle_loop())
+        self.loop_button.grid(row=0, column=4, padx=2)
+
+        # labels and slider on row 2
+
+        self.elapsed_label = CTkLabel(self, text="00:00")
+        self.elapsed_label.grid(row=1, column=0, padx=10)
+
+        self.play_slider = CTkSlider(self, state="disabled", from_=0, to=1)
+        self.play_slider.grid(row=1, column=1,
+                              sticky="ew")
+        self.play_slider.set(0)
+        self.play_slider.bind('<ButtonPress-1>', self.slider_touch)
+        self.play_slider.bind('<B1-Motion>', self.update_elapsed_label)
+        self.play_slider.bind('<ButtonRelease-1>', self.slider_release)
+
+        self.total_label = CTkLabel(self, text="- - : - -")
+        self.total_label.grid(row=1, column=2, padx=10)
+
+    """
+    Enables buttons and changes labels to represent track length
+    """
+
+    def update_state(self, state: MusicFile) -> None:
+        # enable control buttons
+        self.prev_button.configure(state="normal")
+        self.play_button.configure(state="normal")
+        self.next_button.configure(state="normal")
+        self.play_slider.configure(state="normal")
+
+        # configure playtime text
+        # save total time for use by elapsed time text
+        self.curr_total_time_s = state.dur_s
+        total_minutes = int(state.dur_s // 60)
+        final_seconds = int(state.dur_s - (total_minutes * 60))
+
+        self.total_label.configure(text='{:02d}:{:02d}'
+                                   .format(total_minutes, final_seconds))
+
+        self.play()
+
+    """
+    Adjusts slider value based on current track progress
+    """
+
+    def update_slider(self) -> None:
+        if not self.playing:
+            # stop recursion once track is paused
+            return
+
+        progress = self.music_player.get_progress()
+
+        self.play_slider.set(progress)
+        self.update_elapsed_label()
+
+        # recursive call to update slider again
+        self.after(100, self.update_slider)
+
+    """
+    Updates the time label to represent elapsed duration
+    """
+
+    def update_elapsed_label(self, _event: Event = None) -> None:
+        progress = self.play_slider.get()
+        elapsed_time = progress * self.curr_total_time_s
+        total_minutes = int(elapsed_time // 60)
+        final_seconds = int(elapsed_time - (total_minutes * 60))
+
+        self.elapsed_label.configure(text='{:02d}:{:02d}'
+                                     .format(total_minutes,
+                                             final_seconds))
+
+    """
+    Pauses track when the play slider is first touched
+    """
+
+    def slider_touch(self, _event: Event = None) -> None:
+        self.playing_prev = self.playing
+        self.playing = False
+
+    """
+    Seeks requested frame and reverts to previous play state once slider is
+    released
+    """
+
+    def slider_release(self, _event: Event = None) -> None:
+        slider_progress = self.play_slider.get()
+        total_frames = self.music_player.curr_frame_total.value
+
+        requested_frame = int(total_frames * slider_progress)
+        self.music_player.seek(requested_frame)
+
+        if self.playing_prev:
+            self.play()
+
+    """
+    Toggles both the player and the UI between playing and paused
+    """
+
+    def toggle_pause(self) -> None:
+        if self.playing:
+            self.pause()
+        else:
+            self.play()
+
+    """
+    Pauses the player and updates play button
+    """
+
+    def pause(self) -> None:
+        self.play_button.configure(text="play")
+        self.playing = False
+        self.music_player.pause()
+
+    """
+    Resumes the player and updates the play button
+    """
+
+    def play(self) -> None:
+        progress = self.music_player.get_progress()
+        if progress >= 0.999:
+            self.music_player.seek(0)
+
+        self.play_button.configure(text="pause")
+        self.playing = True
+        self.music_player.play()
+
+        self.update_slider()
+
+    """
+    Toggles between if the current track should loop or not
+    """
+
+    def toggle_loop(self) -> None:
+        if self.loop_flag:
+            self.loop_button.configure(text="loop")
+        else:
+            self.loop_button.configure(text="cancel")
+        self.loop_flag = not self.loop_flag
+        self.music_player.toggle_loop()
+
+    def fire_next(self) -> None:
+        self.music_player.fire_next()
+
+    def fire_prev(self) -> None:
+        self.music_player.fire_prev()
+
+    def toggle_shuffle(self) -> None:
+        if self.shuffle_flag:
+            self.shuffle_button.configure(text="shuffle")
+        else:
+            self.shuffle_button.configure(text="cancel")
+        self.shuffle_flag = not self.shuffle_flag
+        self.music_player.toggle_shuffle()
+
+
+"""
+Frame on the right of the play menu allowing for volume control
+"""
+
+
+class VolumeFrame(CTkFrame):
+
+    def __init__(self, parent: CTkFrame, music_player: MusicPlayer) -> None:
+        super().__init__(parent, fg_color="#1c1c1c")
+        self.music_player = music_player
+        self.configure(corner_radius=0,
+                       height=90)
+        self.grid_propagate(False)
+
+        self.mute_button = CTkButton(self, text="mute", width=60,
+                                     command=self.toggle_mute)
+
+        self.mute_button.grid(column=0, row=0, padx=5)
+
+        self.vol_slider = CTkSlider(self, command=self.update_volume)
+        self.vol_slider.grid(column=1, row=0, sticky="we", padx=5)
+
+        self.grid_rowconfigure(0, weight=1)
+
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_columnconfigure(1, weight=4)
+
+    """
+    Adjusts volume based off of newly set slider value
+    """
+
+    def update_volume(self, value: float) -> None:
+        self.music_player.set_volume(value)
+
+    """
+    Toggles whether or not the current track is muted
+    """
+
+    def toggle_mute(self) -> None:
+        if self.music_player.muted:
+            self.mute_button.configure(text="mute")
+        else:
+            self.mute_button.configure(text="unmute")
+        self.music_player.toggle_mute()
