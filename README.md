@@ -1,5 +1,5 @@
 # rain_mixing
-![Preview of the GUI](/src/assets/readme/preview.png)
+![Preview of the GUI](/src/assets/readme/preview.PNG)
 
 A music player that seamlessly mixes rain SFX with selected music 
 
