@@ -10,6 +10,3 @@ A music player that seamlessly mixes rain SFX with selected music
 - Supported extensions are currently .mp3 and .wav
 - Right click any individual track in the file view to play it
 - Right click any folder in the file view to play through files in the folder
-
-
-# Installation
